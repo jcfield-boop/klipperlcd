@@ -178,6 +178,24 @@ class FilamentConfig:
             logger.warning(f"Feedrate {self.feedrate}mm/min seems unusual, using anyway")
 
 
+class FeaturesConfig:
+    """Enhanced features configuration"""
+    def __init__(self, config_parser=None):
+        if config_parser and config_parser.has_section('features'):
+            self.default_pa = config_parser.getfloat('features', 'default_pa', fallback=0.0)
+            self.enable_console_shortcuts = config_parser.getboolean('features', 'enable_console_shortcuts', fallback=True)
+        else:
+            self.default_pa = 0.0
+            self.enable_console_shortcuts = True
+
+        self._validate()
+
+    def _validate(self):
+        """Validate feature settings"""
+        if self.default_pa < 0 or self.default_pa > 2.0:
+            logger.warning(f"Default PA value {self.default_pa} seems unusual (typical: 0.0-0.7)")
+
+
 class KlipperLCDConfig:
     """Main configuration container for KlipperLCD"""
 
@@ -224,6 +242,7 @@ class KlipperLCDConfig:
         self.presets = PresetsConfig(config_parser)
         self.adjustments = AdjustmentsConfig(config_parser)
         self.filament = FilamentConfig(config_parser)
+        self.features = FeaturesConfig(config_parser)
 
     def _find_config_file(self):
         """Search for config file in default locations"""
@@ -454,6 +473,40 @@ load_length = 25
 #
 # WARNING: Too fast can grind filament or cause jams!
 feedrate = 300
+
+# ============================================================================
+# [features] - Enhanced Features Configuration
+# ============================================================================
+# Settings for the enhanced KlipperLCD features (bed mesh, PA, input shaper)
+# BEGINNERS: You can leave these at defaults
+#
+[features]
+
+# Default Pressure Advance value
+# This is the value PA_RESET will return to
+# Default: 0.0 (disabled)
+#
+# How to set this:
+#   1. Run pressure advance calibration test
+#   2. Find your ideal PA value (usually 0.02-0.1 for direct drive)
+#   3. Set that value here
+#   4. Now PA_RESET will return to YOUR tuned value, not 0.0
+#
+# Typical values:
+#   Direct Drive: 0.02 - 0.1
+#   Bowden: 0.3 - 0.7
+#
+# Leave as 0.0 until you've calibrated your printer
+default_pa = 0.0
+
+# Enable console shortcuts (SHOW_MESH, SHOW_PA, etc.)
+# Default: true (enabled)
+#
+# Set to false if you want to disable the shortcut commands
+# and only allow standard GCode commands in console
+#
+# Most users should leave this enabled!
+enable_console_shortcuts = true
 
 # ============================================================================
 # TROUBLESHOOTING TIPS

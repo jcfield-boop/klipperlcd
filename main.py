@@ -237,10 +237,11 @@ class KlipperLCD ():
             print("SET_VELOCITY_LIMIT SQUARE_CORNER_VELOCITY=%.1f" % data)
             self.printer.sendGCode("SET_VELOCITY_LIMIT SQUARE_CORNER_VELOCITY=%.1f" % data)
         elif evt == self.lcd.evt.CONSOLE:
-            # Check for console shortcuts first
-            command = data.strip().upper()
+            # Check for console shortcuts first (if enabled)
+            if self.config.features.enable_console_shortcuts:
+                command = data.strip().upper()
 
-            if command == "SHOW_MESH":
+                if command == "SHOW_MESH":
                 mesh_data = self.printer.get_bed_mesh_data()
                 if mesh_data:
                     formatted_mesh = format_bed_mesh_grid(mesh_data)
@@ -281,7 +282,7 @@ class KlipperLCD ():
                 except (IndexError, ValueError):
                     self.lcd.write_console("Usage: PA_ADJUST <value>\nExample: PA_ADJUST 0.001")
             elif command == "PA_RESET":
-                default_pa = 0.0
+                default_pa = self.config.features.default_pa
                 self.printer.set_pressure_advance(default_pa)
                 self.lcd.write_console(f"Pressure Advance reset to: {default_pa:.4f}")
             elif command == "HELP_LCD":
@@ -296,9 +297,12 @@ PA_RESET      - Reset PA to 0.0
 HELP_LCD      - This help message
 
 All standard Klipper GCode commands also work."""
-                self.lcd.write_console(help_text)
+                    self.lcd.write_console(help_text)
+                else:
+                    # Not a shortcut, send as regular GCode
+                    self.printer.sendGCode(data)
             else:
-                # Not a shortcut, send as regular GCode
+                # Console shortcuts disabled, send as regular GCode
                 self.printer.sendGCode(data)
         # System Status & Visualization Events
         elif evt == self.lcd.evt.VIEW_MESH:
@@ -323,8 +327,8 @@ All standard Klipper GCode commands also work."""
             self.printer.set_pressure_advance(new_pa)
             print(f"Pressure Advance adjusted to: {new_pa:.4f}")
         elif evt == self.lcd.evt.PA_RESET:
-            # Reset to default from config (would need to store default)
-            default_pa = 0.0  # Could be from config
+            # Reset to default from config
+            default_pa = self.config.features.default_pa
             self.printer.set_pressure_advance(default_pa)
             print(f"Pressure Advance reset to: {default_pa:.4f}")
         elif evt == self.lcd.evt.VIEW_SYSTEM_STATUS:

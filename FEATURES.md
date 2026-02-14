@@ -283,6 +283,19 @@ Y-axis: MZV
 - Console shortcuts provide immediate access while custom LCD firmware is being developed
 - See `TFT_FIRMWARE_GUIDE.md` for creating custom LCD screens with dedicated buttons
 
+### Configuration
+Console shortcuts can be configured in `KlipperLCD.cfg`:
+
+```ini
+[features]
+# Set your calibrated PA value here
+# PA_RESET will return to this value instead of 0.0
+default_pa = 0.035
+
+# Enable/disable console shortcuts entirely
+enable_console_shortcuts = true
+```
+
 ---
 
 ## Implementation Details for Developers
