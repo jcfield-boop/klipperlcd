@@ -254,62 +254,246 @@ class KlipperLCDConfig:
         os.makedirs(config_dir, exist_ok=True)
 
         # Generate config content
-        config_content = """# KlipperLCD Configuration File
-# This file configures the KlipperLCD service for Elegoo Neptune 3 Pro LCD screens
-# Edit this file and restart the KlipperLCD service for changes to take effect
+        config_content = """# ============================================================================
+# KlipperLCD Configuration File
+# ============================================================================
+# This file configures the KlipperLCD service for Elegoo Neptune 3 Pro LCD
+#
+# IMPORTANT NOTES FOR BEGINNERS:
+# - Lines starting with # are comments (ignored by the program)
+# - Edit values after the = sign to customize your settings
+# - After making changes, restart the service:
+#   sudo systemctl restart KlipperLCD.service
+# - This file is visible in Mainsail (Machine tab) for easy web editing
+# - Backup this file before making major changes!
+#
+# ============================================================================
 
+# ============================================================================
+# [connection] - LCD Hardware Connection Settings
+# ============================================================================
 [connection]
-# Serial port configuration
+
+# Serial port where your LCD is connected
+# CHANGE THIS if your LCD doesn't work!
+#
+# How to find your serial port:
+#   Run: ls /dev/tty* | grep -E "(USB|ACM|AMA)"
+#
+# Common values:
+#   /dev/ttyUSB0  - USB to UART converter (MOST COMMON for Neptune 3 Pro)
+#   /dev/ttyAMA0  - Direct Raspberry Pi GPIO UART connection
+#   /dev/ttyACM0  - Some USB serial devices
+#
+# If you're not sure, try /dev/ttyUSB0 first (most common)
 serial_port = /dev/ttyUSB0
+
+# Communication speed with LCD (bits per second)
+# DO NOT CHANGE unless you know what you're doing!
+# The Neptune 3 Pro LCD uses 115200 baud
 baud_rate = 115200
 
+# ============================================================================
+# [klipper] - Klipper/Moonraker Connection Settings
+# ============================================================================
 [klipper]
-# Moonraker configuration
+
+# Moonraker server address
+# USUALLY LEAVE AS 127.0.0.1 (localhost)
+# Only change if Moonraker is on a different machine
 moonraker_host = 127.0.0.1
+
+# Moonraker server port
+# USUALLY LEAVE AS 80 (default)
+# Only change if you've customized Moonraker's port
 moonraker_port = 80
+
+# Moonraker API Key (for authentication)
+# USUALLY LEAVE AS XXXXXX (most installations don't need this)
+#
+# When you need to change this:
+#   - If you get "401 Unauthorized" errors in logs
+#   - If your Moonraker has force_logins enabled
+#
+# How to find your API key (if needed):
+#   cat ~/.moonraker_api_key
+#   OR check Mainsail Settings → General → API Key
+#
+# For 99% of users: LEAVE THIS AS XXXXXX
 moonraker_api_key = XXXXXX
 
-# Klipper socket path
+# Path to Klipper's communication socket
+# USUALLY LEAVE AS-IS unless you have a custom Klipper install
+# The ~ means "your home directory"
 klippy_socket = ~/printer_data/comms/klippy.sock
 
+# ============================================================================
+# [paths] - File Locations (Advanced - Usually Don't Need to Change)
+# ============================================================================
 [paths]
-# Installation and data paths
+
+# KlipperLCD installation directory
+# Only change if you installed KlipperLCD in a non-standard location
 install_dir = ~/KlipperLCD
+
+# Log file location (for troubleshooting)
+# View logs with: tail -f /tmp/KlipperLCD.log
+# Or: journalctl -u KlipperLCD.service -f
 log_file = /tmp/KlipperLCD.log
 
+# ============================================================================
+# [presets] - Material Temperature Presets
+# ============================================================================
+# These are the temperatures used when you select a material on the LCD
+# CUSTOMIZE THESE for your specific filament brands and printer!
+#
+# Tips:
+#   - These are starting points - adjust based on your filament
+#   - Check your filament spool for manufacturer recommendations
+#   - Lower temps = better overhangs, more stringing
+#   - Higher temps = stronger parts, worse overhangs
+#
 [presets]
-# Material temperature presets (in Celsius)
-# PLA settings
+
+# PLA (Polylactic Acid) - Most common beginner filament
+# Default: 200°C hotend, 60°C bed
+# Adjust if: Your PLA needs different temps (check spool label)
 pla_hotend = 200
 pla_bed = 60
 
-# ABS settings
+# ABS (Acrylonitrile Butadiene Styrene) - Strong, requires enclosure
+# Default: 245°C hotend, 100°C bed
+# Warning: ABS needs good ventilation and ideally an enclosure
+# Adjust if: Your ABS prints warp or don't stick
 abs_hotend = 245
 abs_bed = 100
 
-# PETG settings
+# PETG (Polyethylene Terephthalate Glycol) - Strong & flexible
+# Default: 225°C hotend, 70°C bed
+# Tip: PETG sticks VERY well - use glue stick or painter's tape
+# Adjust if: Parts don't stick or you get stringing
 petg_hotend = 225
 petg_bed = 70
 
-# TPU settings
+# TPU (Thermoplastic Polyurethane) - Flexible filament
+# Default: 220°C hotend, 60°C bed
+# Tip: Print SLOW with TPU (20-30mm/s) to avoid jams
+# Adjust if: Filament buckles or won't extrude smoothly
 tpu_hotend = 220
 tpu_bed = 60
 
-# Probe/mesh bed leveling temperature
+# Probe/Bed Leveling Temperature
+# Temperature to heat bed during mesh bed leveling
+# Why: Bed expands when hot, so level at printing temperature
+# Tip: Match this to your most-used filament's bed temp
 probe_hotend = 200
 probe_bed = 60
 
+# ============================================================================
+# [adjustments] - UI Control Increments
+# ============================================================================
+# How much each +/- button press changes values on the LCD
+# BEGINNERS: You can leave these at defaults
+# Advanced users: Adjust for your preferred control precision
+#
 [adjustments]
-# Default adjustment increments for UI controls
+
+# Temperature adjustment step (in degrees Celsius)
+# When you press +/- on temperature, it changes by this amount
+# Default: 10°C steps
+# Smaller = more precise, more button presses needed
+# Larger = faster adjustment, less precise
 temp_unit = 10
+
+# Movement step size (in millimeters)
+# When you press +/- to move X/Y/Z, it moves this distance
+# Default: 1mm steps
+# Common alternatives: 0.1mm (precise), 10mm (fast)
 move_unit = 1
+
+# Print speed adjustment step (in percent)
+# When adjusting print speed, it changes by this amount
+# Default: 10% steps (so 100% → 110% → 120%)
+# Tip: Smaller steps (5%) give more control
 speed_unit = 10
+
+# Acceleration adjustment step (in mm/s²)
+# When adjusting acceleration, it changes by this amount
+# Default: 100 mm/s² steps
+# Beginners: Leave as-is unless tuning for speed/quality
 accel_unit = 100
 
+# ============================================================================
+# [filament] - Filament Loading/Unloading Settings
+# ============================================================================
+# Controls how much filament moves during load/unload operations
+# BEGINNERS: These defaults work for most setups
+#
 [filament]
-# Filament load/unload settings
+
+# Filament load/unload length (in millimeters)
+# How much filament to push/pull when loading/unloading
+# Default: 25mm
+#
+# Adjust if:
+#   - Filament doesn't reach hotend: INCREASE (try 50mm)
+#   - Too much oozing during unload: DECREASE (try 15mm)
+#   - Bowden tube setup: May need 100mm+ to feed through tube
+#
+# Tip: For Neptune 3 Pro (direct drive), 25mm is usually perfect
 load_length = 25
+
+# Filament extrusion speed (in mm/min)
+# How fast to push filament during load/unload
+# Default: 300 mm/min (5mm/s)
+#
+# Adjust if:
+#   - Extruder grinds filament: DECREASE (try 200)
+#   - Loading is too slow: INCREASE (try 400)
+#   - Getting filament jams: DECREASE
+#
+# WARNING: Too fast can grind filament or cause jams!
 feedrate = 300
+
+# ============================================================================
+# TROUBLESHOOTING TIPS
+# ============================================================================
+#
+# LCD not working?
+#   1. Check serial_port is correct (ls /dev/tty*)
+#   2. Check LCD cable is plugged in
+#   3. Check logs: journalctl -u KlipperLCD.service -f
+#
+# Temperatures wrong?
+#   1. Verify presets match your filament
+#   2. Check first layer with paper test
+#   3. Adjust bed temp ±5°C for adhesion
+#
+# Can't connect to Moonraker?
+#   1. Check moonraker_host (usually 127.0.0.1)
+#   2. Check Moonraker is running: systemctl status moonraker
+#   3. Only set API key if you see "401 Unauthorized" errors
+#
+# Made a mistake?
+#   Delete this file and run: python3 ~/KlipperLCD/main.py --generate-config
+#   This will regenerate with all defaults
+#
+# ============================================================================
+# AFTER EDITING THIS FILE
+# ============================================================================
+# Always restart the service for changes to take effect:
+#
+#   sudo systemctl restart KlipperLCD.service
+#
+# Check if it worked:
+#
+#   sudo systemctl status KlipperLCD.service
+#   journalctl -u KlipperLCD.service -f
+#
+# Edit via Mainsail:
+#   Open Mainsail → Machine tab → Find KlipperLCD.cfg → Click to edit
+#
+# ============================================================================
 """
 
         try:
