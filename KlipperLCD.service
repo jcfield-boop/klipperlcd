@@ -4,11 +4,12 @@
 
 [Service]
  Type=simple
- User=pi
+ User=biqu
  Restart=always
  RestartSec=1
- ExecStart=/bin/sh -c '/usr/bin/env python3 /home/pi/KlipperLCD/main.py  > /tmp/KlipperLCD.log 2>&1'
+ ExecStart=/bin/sh -c '/usr/bin/env python3 /home/biqu/KlipperLCD/main.py  > /tmp/KlipperLCD.log 2>&1'
 
 [Install]
  WantedBy=multi-user.target
+
 
