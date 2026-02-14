@@ -1,0 +1,105 @@
+================================================================================
+  QUICK SETUP COMMANDS - Copy/Paste These on Your Printer
+================================================================================
+
+SSH to your printer, then run these commands:
+
+--------------------------------------------------------------------------------
+STEP 1: Check Current Situation
+--------------------------------------------------------------------------------
+
+# See what's in your config directory
+ls -la ~/printer_data/config/*.cfg
+
+# See what's in KlipperLCD directory
+ls -la ~/KlipperLCD/*.cfg
+
+# Check current includes in printer.cfg
+grep "^\[include" ~/printer_data/config/printer.cfg
+
+--------------------------------------------------------------------------------
+STEP 2: Copy Macro Files
+--------------------------------------------------------------------------------
+
+# Copy filament macros
+cp ~/KlipperLCD/filament_macros.cfg ~/printer_data/config/
+
+# Copy useful macros
+cp ~/KlipperLCD/useful_macros.cfg ~/printer_data/config/
+
+# Verify they copied
+ls -la ~/printer_data/config/*.cfg
+
+--------------------------------------------------------------------------------
+STEP 3: Edit printer.cfg
+--------------------------------------------------------------------------------
+
+# Open printer.cfg in editor
+nano ~/printer_data/config/printer.cfg
+
+# Add these lines at the VERY TOP (above everything else):
+#
+#   [include filament_macros.cfg]
+#   [include useful_macros.cfg]
+#
+# Save: Ctrl+X, then Y, then Enter
+
+--------------------------------------------------------------------------------
+STEP 4: Restart Klipper
+--------------------------------------------------------------------------------
+
+# Restart Klipper service
+sudo systemctl restart klipper
+
+# Check if it's running
+sudo systemctl status klipper
+
+# Or just click "Restart" button in Mainsail web interface
+
+--------------------------------------------------------------------------------
+STEP 5: Test in Mainsail
+--------------------------------------------------------------------------------
+
+1. Open Mainsail in your browser
+2. Look for "Macros" section on the dashboard
+3. You should see 50+ macros including:
+   - FILAMENT_LOAD
+   - PREHEAT_PLA
+   - LEVEL_BED
+   - START_PRINT
+   - etc.
+
+4. Click any macro to test it!
+
+--------------------------------------------------------------------------------
+TROUBLESHOOTING
+--------------------------------------------------------------------------------
+
+If macros don't show up:
+
+# Check for errors in Klipper logs
+journalctl -u klipper -n 50
+
+# Verify includes are correct
+cat ~/printer_data/config/printer.cfg | head -20
+
+# Make sure files exist
+ls ~/printer_data/config/filament_macros.cfg
+ls ~/printer_data/config/useful_macros.cfg
+
+# Restart Klipper again
+sudo systemctl restart klipper
+
+--------------------------------------------------------------------------------
+ALTERNATIVE: Use Setup Script
+--------------------------------------------------------------------------------
+
+If you want an automated setup:
+
+cd ~/KlipperLCD
+git pull
+bash setup_macros.sh
+
+This will check everything and guide you through the setup.
+
+================================================================================
