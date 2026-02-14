@@ -182,14 +182,23 @@ The console enables sending commands and will display all gcode responses and in
 
 ### Enhanced Console Shortcuts
 KlipperLCD includes convenient shortcuts for advanced features:
+
+**Calibration & Tuning:**
 - `SHOW_MESH` - View bed mesh visualization
 - `SHOW_STATUS` - System status & MCU temperature
 - `SHOW_PA` - Pressure Advance info and tuning
 - `SHOW_SHAPER` - Input Shaper configuration
 - `PA_ADJUST <value>` - Fine-tune Pressure Advance (e.g., `PA_ADJUST 0.001`)
+
+**Filament Management:**
+- `LOAD_FILAMENT` - Heat nozzle and load filament
+- `UNLOAD_FILAMENT` - Heat nozzle and unload filament
+- `CHANGE_FILAMENT` - Pause print, swap filament, resume
+
+**Help:**
 - `HELP_LCD` - Show all available shortcuts
 
-See `FEATURES.md` for detailed documentation of all enhanced features.
+See `FEATURES.md` for calibration features and `FILAMENT_CHANGE_GUIDE.md` for filament operations.
 
 <p float="left">
     <img src="img/console.PNG" height="400">

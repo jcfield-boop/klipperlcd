@@ -104,6 +104,10 @@ class LCDEvents():
     PA_RESET       = 34
     VIEW_SYSTEM_STATUS = 35
     TOGGLE_INPUT_SHAPER = 36
+    # Filament change events
+    FILAMENT_LOAD   = 37
+    FILAMENT_UNLOAD = 38
+    FILAMENT_CHANGE = 39
 
 
 class LCD:

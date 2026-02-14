@@ -1,0 +1,335 @@
+===============================================================================
+  TFT MODDING CHECKLIST - Track Your Progress
+===============================================================================
+
+Use this checklist to track your progress as you create the enhanced LCD
+firmware. Check off each step as you complete it!
+
+===============================================================================
+PRE-FLIGHT (Before Starting)
+===============================================================================
+
+Hardware Prep:
+[ ] Windows 7 laptop ready
+[ ] Micro SD card available (1-32GB)
+[ ] SD card formatted as FAT32
+[ ] USB drive for file transfer (Mac → Windows)
+[ ] Neptune 3 Pro powered off and accessible
+
+File Transfer (Mac to Windows):
+[ ] Copied TFT_Modding_Package folder to USB drive
+[ ] USB drive safely ejected from Mac
+[ ] Files copied to C:\Neptune3Pro_LCD\ on Windows
+[ ] Verified all 7 files present
+[ ] Made backup copy of 20240129.tft
+
+Software Setup:
+[ ] Downloaded DGUS Tool
+[ ] Installed DGUS Tool successfully
+[ ] Can launch DGUS Tool without errors
+[ ] Opened LCD_program.HMI successfully
+
+Documentation Ready:
+[ ] STEP_BY_STEP.md open for reference
+[ ] SCREEN_LAYOUTS.txt available for coordinates
+[ ] README.txt read and understood
+
+===============================================================================
+PHASE 1: Understanding Current Firmware
+===============================================================================
+
+Exploration:
+[ ] DGUS Tool shows list of existing screens
+[ ] Noted highest screen number used: ________
+[ ] Identified main screen ID: ________
+[ ] Identified settings/menu screen ID: ________
+[ ] Checked VP address usage (0x1001 available?)
+[ ] Checked VP addresses 0x3000-0x3400 available
+
+Screen Mapping (document what screens exist):
+Screen 0: ________________________
+Screen 1: ________________________
+Screen 2: ________________________
+Screen 3: ________________________
+Screen 4: ________________________
+Screen 5: ________________________
+Other: ___________________________
+
+===============================================================================
+PHASE 2: Creating Screen 21 (System Status) - YOUR FIRST SCREEN!
+===============================================================================
+
+Background Image:
+[ ] Created 21.bmp (480x320 pixels)
+[ ] Added title text "System Status"
+[ ] Added button labels "View Status" and "Back"
+[ ] Saved to correct location
+[ ] Imported into DGUS Tool Screen 21
+
+Screen Setup:
+[ ] Created new screen with ID: 21
+[ ] Set screen size to 480x320
+[ ] Applied background image 21.bmp
+
+Text Display Variable:
+[ ] Added Text Variable control
+[ ] Set VP Address: 0x3100
+[ ] Position: X=10, Y=50
+[ ] Size: Width=460, Height=200
+[ ] Font selected: _______________
+[ ] Color: White
+[ ] Mode: Read/Write
+[ ] Max chars: 200
+
+View Status Button:
+[ ] Added Touch Control
+[ ] Position: X=10, Y=265
+[ ] Size: Width=220, Height=45
+[ ] Action Type: Return Key Code
+[ ] VP Address: 0x1001
+[ ] Key Value: 35
+
+Back Button:
+[ ] Added Touch Control
+[ ] Position: X=250, Y=265
+[ ] Size: Width=220, Height=45
+[ ] Action Type: Jump Screen
+[ ] Target Screen: ________ (your main screen ID)
+
+===============================================================================
+PHASE 3: Adding Navigation to Main Screen
+===============================================================================
+
+[ ] Found main screen (or settings screen)
+[ ] Identified empty space for new button
+[ ] Added Touch Control for "System Status" or "Tools"
+[ ] Configured as Jump Screen to Screen 21
+[ ] Updated background image with button label (optional)
+
+===============================================================================
+PHASE 4: Building First Test Version
+===============================================================================
+
+Generate Files:
+[ ] Clicked File → Generate (or Build)
+[ ] DGUS Tool completed without errors
+[ ] Found output files (13.bin, *.bmp, fonts, etc.)
+[ ] All screen .bmp files present (including 21.bmp)
+
+Create TFT File:
+[ ] Selected ALL files in output folder
+[ ] Created ZIP archive
+[ ] Renamed to: klipperlcd_test_v1.tft
+[ ] Verified files are in ROOT of ZIP (not in subfolder)
+[ ] File size seems reasonable (5-20MB typical)
+
+===============================================================================
+PHASE 5: Flashing to LCD (First Test!)
+===============================================================================
+
+Preparation:
+[ ] Backed up original 20240129.tft to safe location
+[ ] SD card formatted as FAT32
+[ ] Copied klipperlcd_test_v1.tft to SD card ROOT
+[ ] Safely ejected SD card from Windows
+
+Flashing Process:
+[ ] Powered OFF Neptune 3 Pro completely
+[ ] Removed LCD back cover (4 screws)
+[ ] Inserted SD card into LCD micro SD slot
+[ ] Powered ON LCD
+[ ] LCD shows update progress bar
+[ ] LCD displays "Update Successed!" message
+[ ] Powered OFF, removed SD card
+[ ] Replaced back cover
+[ ] Powered ON to test
+
+===============================================================================
+PHASE 6: Testing Screen 21
+===============================================================================
+
+Navigation Test:
+[ ] LCD powers on normally
+[ ] Main screen displays correctly
+[ ] Can tap button to navigate to Screen 21
+[ ] Screen 21 displays with background
+
+Button Test:
+[ ] "Back" button returns to main screen
+[ ] "View Status" button can be tapped
+[ ] No crashes or freezes
+
+Backend Test (on printer via SSH):
+[ ] SSH connected: ssh biqu@192.168.0.50
+[ ] Monitoring logs: journalctl -u KlipperLCD.service -f
+[ ] Tapped "View Status" button
+[ ] Logs show: Event 35 received
+[ ] Screen 21 text area shows status text
+[ ] MCU temperature displays correctly
+
+Success Criteria for Screen 21:
+[ ] Navigation works (to screen and back)
+[ ] Button sends Event 35 (visible in logs)
+[ ] Text displays system status
+[ ] No errors or crashes
+[ ] Ready to add more screens!
+
+===============================================================================
+PHASE 7: Adding Screen 24 (Tools Menu)
+===============================================================================
+
+[ ] Created 24.bmp background (simple list)
+[ ] Created Screen 24 in DGUS Tool
+[ ] Added jump buttons to screens 20, 21, 22, 23
+[ ] Added back button to main screen
+[ ] Generated and tested
+
+===============================================================================
+PHASE 8: Adding Screen 20 (Bed Mesh)
+===============================================================================
+
+[ ] Created 20.bmp background
+[ ] Created Screen 20
+[ ] Added large text display (VP 0x3000, 800 chars)
+[ ] Added "Refresh" button (Event 30)
+[ ] Added "Back" button
+[ ] Generated and tested
+[ ] Mesh grid displays correctly
+
+===============================================================================
+PHASE 9: Adding Screen 22 (Pressure Advance)
+===============================================================================
+
+[ ] Created 22.bmp background
+[ ] Created Screen 22
+[ ] Added text display (VP 0x3200)
+[ ] Added PA adjustment variable (VP 0x3201)
+[ ] Added -0.01 button
+[ ] Added -0.001 button
+[ ] Added +0.001 button
+[ ] Added +0.01 button
+[ ] Added Reset button (Event 34)
+[ ] Added Back button
+[ ] Generated and tested
+[ ] PA adjustments work
+
+===============================================================================
+PHASE 10: Adding Screen 23 (Input Shaper)
+===============================================================================
+
+[ ] Created 23.bmp background
+[ ] Created Screen 23
+[ ] Added text display (VP 0x3300)
+[ ] Added toggle variable (VP 0x3301)
+[ ] Added Enable button
+[ ] Added Disable button
+[ ] Added Back button
+[ ] Generated and tested
+
+===============================================================================
+FINAL BUILD
+===============================================================================
+
+[ ] All 5 screens created and tested individually
+[ ] Navigation flows correctly
+[ ] All events trigger properly (check logs)
+[ ] All text displays show data
+[ ] Generated final .tft file
+[ ] Named: klipperlcd_enhanced_final.tft
+[ ] Flashed to LCD
+[ ] Full system test completed
+
+Full System Test:
+[ ] Boot to main screen
+[ ] Navigate to Tools Menu (Screen 24)
+[ ] Test Bed Mesh (Screen 20)
+[ ] Test System Status (Screen 21)
+[ ] Test Pressure Advance (Screen 22)
+[ ] Test Input Shaper (Screen 23)
+[ ] All features work
+[ ] No crashes or errors
+[ ] Can return to main screen from all screens
+
+===============================================================================
+POST-COMPLETION
+===============================================================================
+
+Backup & Document:
+[ ] Saved final .tft file to safe location
+[ ] Saved DGUS Tool project file
+[ ] Documented custom changes made
+[ ] Saved background .bmp source files
+[ ] Created version notes
+
+Testing & Validation:
+[ ] Tested all features during actual print
+[ ] Verified bed mesh shows correctly
+[ ] Tested PA adjustment while printing
+[ ] Confirmed no issues after extended use
+
+Optional Enhancements:
+[ ] Created custom button graphics
+[ ] Improved background designs
+[ ] Added more visual polish
+[ ] Created multiple color schemes
+
+Sharing (Optional):
+[ ] Shared .tft file with community
+[ ] Posted screenshots
+[ ] Documented lessons learned
+[ ] Helped others with TFT modding
+
+===============================================================================
+TROUBLESHOOTING LOG
+===============================================================================
+
+Use this space to track any issues encountered and how you solved them:
+
+Issue 1:
+Problem: _______________________________________________________________
+Solution: ______________________________________________________________
+
+Issue 2:
+Problem: _______________________________________________________________
+Solution: ______________________________________________________________
+
+Issue 3:
+Problem: _______________________________________________________________
+Solution: ______________________________________________________________
+
+===============================================================================
+NOTES & OBSERVATIONS
+===============================================================================
+
+Things that worked well:
+
+
+Things that were challenging:
+
+
+Tips for next time:
+
+
+Estimated time spent:
+  Planning: _______ hours
+  Screen creation: _______ hours
+  Testing/debugging: _______ hours
+  Total: _______ hours
+
+===============================================================================
+CONGRATULATIONS!
+===============================================================================
+
+When you've checked all boxes above, you've successfully created custom
+enhanced LCD firmware for your Neptune 3 Pro!
+
+You now have:
+✓ Bed mesh visualization on your LCD
+✓ System status monitoring
+✓ Pressure advance fine-tuning
+✓ Input shaper control
+✓ Professional-grade calibration tools
+
+You've leveled up from "LCD user" to "LCD firmware developer"! 🎉
+
+===============================================================================

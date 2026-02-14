@@ -285,6 +285,15 @@ class KlipperLCD ():
                 default_pa = self.config.features.default_pa
                 self.printer.set_pressure_advance(default_pa)
                 self.lcd.write_console(f"Pressure Advance reset to: {default_pa:.4f}")
+            elif command == "LOAD_FILAMENT":
+                self.printer.sendGCode("FILAMENT_LOAD")
+                self.lcd.write_console("Loading filament...\nFollow prompts on screen.")
+            elif command == "UNLOAD_FILAMENT":
+                self.printer.sendGCode("FILAMENT_UNLOAD")
+                self.lcd.write_console("Unloading filament...\nFollow prompts on screen.")
+            elif command == "CHANGE_FILAMENT":
+                self.printer.sendGCode("FILAMENT_CHANGE")
+                self.lcd.write_console("Filament change started...\nFollow prompts on screen.")
             elif command == "HELP_LCD":
                 help_text = """KlipperLCD Console Shortcuts:
 
@@ -294,6 +303,11 @@ SHOW_PA       - Pressure Advance info
 SHOW_SHAPER   - Input Shaper config
 PA_ADJUST <n> - Adjust PA (±0.001, ±0.01)
 PA_RESET      - Reset PA to 0.0
+
+LOAD_FILAMENT   - Load filament
+UNLOAD_FILAMENT - Unload filament
+CHANGE_FILAMENT - Change filament during print
+
 HELP_LCD      - This help message
 
 All standard Klipper GCode commands also work."""
@@ -345,6 +359,19 @@ All standard Klipper GCode commands also work."""
             enabled = bool(data)  # data should be 1 for enable, 0 for disable
             self.printer.toggle_input_shaper(enabled)
             print(f"Input Shaper {'enabled' if enabled else 'disabled'}")
+        # Filament change events
+        elif evt == self.lcd.evt.FILAMENT_LOAD:
+            print("Filament load initiated")
+            self.printer.sendGCode("FILAMENT_LOAD")
+            self.lcd.write_console("Loading filament...\nHeat nozzle and wait for extrusion.")
+        elif evt == self.lcd.evt.FILAMENT_UNLOAD:
+            print("Filament unload initiated")
+            self.printer.sendGCode("FILAMENT_UNLOAD")
+            self.lcd.write_console("Unloading filament...\nHeat nozzle and wait for retraction.")
+        elif evt == self.lcd.evt.FILAMENT_CHANGE:
+            print("Filament change initiated")
+            self.printer.sendGCode("FILAMENT_CHANGE")
+            self.lcd.write_console("Filament change started.\nWait for instructions...")
         else:
             print("lcd_callback event not recognised %d" % evt)
 

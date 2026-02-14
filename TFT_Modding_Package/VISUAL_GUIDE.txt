@@ -1,0 +1,333 @@
+===============================================================================
+  VISUAL GUIDE - Screen 21 (System Status) - YOUR FIRST SCREEN
+===============================================================================
+
+This is what you're creating! Screen 21 - System Status
+
+┌─────────────────────────────────────────────────────────────────────┐
+│ 480 pixels wide                                                     │
+│                                                                      │
+│  System Status                                    ← Title (Y=10)    │
+│  ══════════════                                                      │
+│                                                                      │
+│  ┌───────────────────────────────────────────────┐                  │
+│  │                                               │                  │
+│  │  System Status:                               │  ← Text Display  │
+│  │  Ready                                        │     VP: 0x3100   │
+│  │                                               │     X=10, Y=50   │
+│  │  MCU Temp: 45.2°C                             │     460x200 px   │
+│  │                                               │                  │
+│  │  (Status text from KlipperLCD appears here)  │                  │
+│  │                                               │                  │
+│  │                                               │                  │
+│  │                                               │                  │
+│  │                                               │                  │
+│  └───────────────────────────────────────────────┘                  │
+│                                                                      │
+│                                                                      │
+│                                                                      │
+│  ┌────────────────────┐         ┌────────────────────┐              │
+│  │   View Status      │         │       Back         │ ← Buttons    │
+│  │                    │         │                    │   Y=265      │
+│  │   (Event 35)       │         │  (Jump Screen 0)   │              │
+│  └────────────────────┘         └────────────────────┘              │
+│   X=10, W=220, H=45              X=250, W=220, H=45                 │
+│                                                                      │
+└──────────────────────────────────────────────────────────────────── │
+  320 pixels tall
+
+===============================================================================
+WHAT EACH PART DOES
+===============================================================================
+
+Title "System Status" (Y=10):
+  - Static text painted on background image (21.bmp)
+  - Not a variable, just visual design
+  - Helps user know what screen they're on
+
+Text Display Box (VP 0x3100):
+  - This is where KlipperLCD writes data
+  - When you press "View Status" button:
+    1. Button sends Event 35 to KlipperLCD
+    2. KlipperLCD reads system status from Klipper
+    3. KlipperLCD formats the text
+    4. KlipperLCD writes to VP 0x3100
+    5. LCD displays the text in this box
+  - Example output:
+      "System Status:
+       Ready
+
+       MCU Temp: 45.2°C"
+
+"View Status" Button:
+  - Touch area: Rectangle from X=10,Y=265 to X=230,Y=310
+  - When tapped:
+    → Sends value 35 to VP address 0x1001
+    → KlipperLCD receives Event 35
+    → KlipperLCD executes VIEW_SYSTEM_STATUS handler
+    → Status appears in text box above
+
+"Back" Button:
+  - Touch area: Rectangle from X=250,Y=265 to X=470,Y=310
+  - When tapped:
+    → Jumps to Screen 0 (your main screen)
+    → Simple navigation, no events sent
+
+===============================================================================
+HOW DATA FLOWS
+===============================================================================
+
+User Action → LCD → KlipperLCD → Klipper → Back to LCD
+
+Step-by-step example:
+
+1. User taps "View Status" button on LCD
+
+2. LCD hardware:
+   - Detects touch in button area
+   - Reads button configuration (Event 35, VP 0x1001)
+   - Sends data via serial: [Event Code: 35] at address 0x1001
+
+3. KlipperLCD (main.py):
+   - Receives serial data from LCD
+   - Parses: "Got event 35"
+   - Looks up event handler: VIEW_SYSTEM_STATUS
+   - Calls: self.printer.get_klipper_state()
+   - Calls: self.printer.get_mcu_stats()
+
+4. PrinterData (printer.py):
+   - Makes HTTP request to Moonraker
+   - GET /printer/objects/query?klipper_state
+   - GET /printer/objects/query?mcu
+   - Receives JSON data from Klipper
+
+5. Visualization (visualization.py):
+   - format_klipper_state(state_info)
+   - format_system_stats(mcu_stats)
+   - Returns formatted text string
+
+6. KlipperLCD (main.py):
+   - Receives formatted text
+   - Calls: self.lcd.write_console(output)
+   - OR writes to VP 0x3100 (depending on implementation)
+
+7. LCD Hardware:
+   - Receives text data for VP 0x3100
+   - Updates text display variable
+   - User sees: "System Status: Ready, MCU Temp: 45.2°C"
+
+===============================================================================
+DGUS TOOL CONFIGURATION DETAILS
+===============================================================================
+
+Screen 21 Settings:
+┌─────────────────────────────────────┐
+│ Screen Properties                   │
+├─────────────────────────────────────┤
+│ Screen ID: 21                       │
+│ Width: 480                          │
+│ Height: 320                         │
+│ Background: 21.bmp                  │
+│ Return Screen: (blank)              │
+│ Timeout: (none)                     │
+└─────────────────────────────────────┘
+
+Text Display Variable Settings:
+┌──────────────────────────────────────┐
+│ Variable Display Properties          │
+├──────────────────────────────────────┤
+│ Type: Text / ASCII String            │
+│ VP Address: 0x3100 (hex)             │
+│ X Position: 10                       │
+│ Y Position: 50                       │
+│ Width: 460 pixels                    │
+│ Height: 200 pixels                   │
+│ Font: ASCII_20 (or similar)          │
+│ Font Color: 0xFFFF (white)           │
+│ Background: Transparent              │
+│ Alignment: Left / Top                │
+│ Max Length: 200 characters           │
+│ Display Mode: Read/Write             │
+└──────────────────────────────────────┘
+
+"View Status" Button Settings:
+┌──────────────────────────────────────┐
+│ Touch Control Properties             │
+├──────────────────────────────────────┤
+│ Action Type: Return Key Code         │
+│ Touch Area:                          │
+│   X: 10                              │
+│   Y: 265                             │
+│   Width: 220                         │
+│   Height: 45                         │
+│ Control Data:                        │
+│   VP Address: 0x1001                 │
+│   Key Code Value: 35 (decimal)       │
+│   (or 0x23 in hex)                   │
+│ Visual Feedback: (optional)          │
+│   Press Effect: Highlight/None       │
+└──────────────────────────────────────┘
+
+"Back" Button Settings:
+┌──────────────────────────────────────┐
+│ Touch Control Properties             │
+├──────────────────────────────────────┤
+│ Action Type: Jump Screen             │
+│ Touch Area:                          │
+│   X: 250                             │
+│   Y: 265                             │
+│   Width: 220                         │
+│   Height: 45                         │
+│ Jump Target:                         │
+│   Screen ID: 0 (your main screen)    │
+│ Visual Feedback: (optional)          │
+│   Press Effect: Highlight/None       │
+└──────────────────────────────────────┘
+
+===============================================================================
+CREATING THE BACKGROUND IMAGE (21.bmp)
+===============================================================================
+
+Using Paint (Windows):
+
+1. Create new image:
+   - Image → Attributes → Width: 480, Height: 320
+
+2. Fill background:
+   - Paint bucket → Black or dark gray (#1a1a1a)
+
+3. Add title text:
+   - Text tool → Font: Arial, Size: 32pt, Bold, White
+   - Position near top (Y ≈ 10)
+   - Type: "System Status"
+
+4. Add button labels:
+   - Text tool → Font: Arial, Size: 18pt, White
+   - At Y ≈ 275, X ≈ 50: "View Status"
+   - At Y ≈ 275, X ≈ 320: "Back"
+
+5. Optional decorations:
+   - Draw rectangles around button areas
+   - Add separator lines
+   - Use Image → Attributes to verify: 480x320
+
+6. Save as:
+   - File → Save As
+   - Format: 24-bit Bitmap (.bmp)
+   - Name: 21.bmp
+   - Location: C:\Neptune3Pro_LCD\
+
+===============================================================================
+WHAT YOU'LL SEE WHEN IT WORKS
+===============================================================================
+
+On LCD (before pressing button):
+┌─────────────────────────┐
+│ System Status           │
+│ ═══════════             │
+│                         │
+│ (empty text area)       │
+│                         │
+│                         │
+│ [View Status]  [Back]   │
+└─────────────────────────┘
+
+After pressing "View Status":
+┌──────────────────────────────┐
+│ System Status                │
+│ ══════════                   │
+│ System Status:               │
+│ Ready                        │
+│                              │
+│ MCU Temp: 45.2°C             │
+│                              │
+│ [View Status]  [Back]        │
+└──────────────────────────────┘
+
+In logs (SSH to printer):
+```
+Feb 14 08:00:15 KlipperLCD[1234]: Received LCD event: 35
+Feb 14 08:00:15 KlipperLCD[1234]: VIEW_SYSTEM_STATUS triggered
+Feb 14 08:00:15 KlipperLCD[1234]: Klipper state: ready
+Feb 14 08:00:15 KlipperLCD[1234]: MCU temp: 45.2°C
+Feb 14 08:00:15 KlipperLCD[1234]: Writing to LCD console
+```
+
+===============================================================================
+COMMON MISTAKES TO AVOID
+===============================================================================
+
+❌ Background image wrong size
+   → Must be EXACTLY 480x320 pixels
+   → Check: Image → Attributes in Paint
+
+❌ Text variable set to "Read Only"
+   → Must be "Read/Write" or "Display" mode
+   → Check variable properties in DGUS Tool
+
+❌ VP address typo
+   → 0x3100 not 0x31000 or 3100
+   → Hex addresses start with 0x
+
+❌ Event code wrong
+   → Event 35 for system status, not 36 or 34
+   → Check SCREEN_LAYOUTS.txt for correct values
+
+❌ Button touch area too small
+   → Make buttons at least 40 pixels tall
+   → Fingers need space!
+
+❌ Files not in ZIP root
+   → When creating .tft, files must be at top level
+   → Not in a subfolder called "DWIN_SET" or similar
+
+❌ SD card not FAT32
+   → LCD only reads FAT32 format
+   → Reformat if using exFAT or NTFS
+
+===============================================================================
+SUCCESS INDICATORS
+===============================================================================
+
+✓ DGUS Tool opens project without errors
+✓ Can see Screen 21 in screen list
+✓ Background image displays in DGUS Tool
+✓ All controls visible in design view
+✓ Generate/Build completes without errors
+✓ .tft file is 5-20MB (reasonable size)
+✓ LCD shows "Update Successed!" when flashing
+✓ Can navigate to Screen 21 from main screen
+✓ "Back" button returns to main screen
+✓ Tapping "View Status" triggers event (check logs!)
+✓ Text appears in display area
+✓ Status shows "Ready" and temperature
+
+If ALL above are ✓, you succeeded! 🎉
+
+===============================================================================
+NEXT STEPS AFTER SUCCESS
+===============================================================================
+
+1. Celebrate! You just modified LCD firmware! 🎉
+
+2. Add Tools Menu (Screen 24):
+   - Simple navigation screen
+   - Buttons to jump to other screens
+   - Good practice before complex screens
+
+3. Add Bed Mesh (Screen 20):
+   - Most useful feature
+   - Larger text area needed
+   - Similar to System Status
+
+4. Iterate and improve:
+   - Better graphics
+   - Custom icons
+   - Color schemes
+
+5. Share your work:
+   - Post .tft file
+   - Help other users
+   - Contribute back to community
+
+===============================================================================

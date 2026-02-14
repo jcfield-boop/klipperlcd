@@ -1,0 +1,310 @@
+# Screen Layout Reference - Exact Coordinates
+# Neptune 3 Pro LCD: 480x320 pixels
+# Copy these values into DGUS Tool exactly!
+
+==============================================================================
+SCREEN 21: SYSTEM STATUS (Easiest - Start Here!)
+==============================================================================
+
+Background Image (21.bmp):
+  Size: 480 x 320 pixels
+  Background color: #1a1a1a (dark gray) or #000000 (black)
+
+  Text Labels (paint directly on background):
+    Title: "System Status" at X=10, Y=10, White color, 24pt font
+    Button labels: "View Status" at X=50, Y=275, White, 16pt
+                   "Back" at X=320, Y=275, White, 16pt
+
+Text Display Variable:
+  Type: Text Variable / ASCII String
+  VP Address: 0x3100
+  Position: X=10, Y=50
+  Size: Width=460, Height=200
+  Max Characters: 200
+  Font: ASCII_24 or similar readable font
+  Text Color: White (#FFFFFF)
+  Background: Transparent
+  Mode: Read/Write
+
+Button 1: "View Status"
+  Type: Touch Control
+  Action: Return Key Code
+  Touch Area: X=10, Y=265, Width=220, Height=45
+  VP Address: 0x1001
+  Key Value: 35 (decimal) or 0x23 (hex)
+
+Button 2: "Back"
+  Type: Touch Control
+  Action: Jump Screen
+  Touch Area: X=250, Y=265, Width=220, Height=45
+  Target Screen: 0 (adjust to your main screen ID)
+
+==============================================================================
+SCREEN 20: BED MESH VISUALIZATION
+==============================================================================
+
+Background Image (20.bmp):
+  Size: 480 x 320 pixels
+
+  Text Labels:
+    Title: "Bed Mesh" at X=10, Y=10
+    Button: "Refresh" at X=50, Y=275
+    Button: "Back" at X=320, Y=275
+
+Text Display Variable:
+  Type: Text Variable
+  VP Address: 0x3000
+  Position: X=10, Y=40
+  Size: Width=460, Height=220
+  Max Characters: 800 (large! for mesh grid)
+  Font: Monospace if available (Courier, ASCII_16)
+  Text Color: Green (#00FF00) or White
+  Mode: Read/Write
+
+  Why large: Mesh grid looks like:
+    Bed Mesh (default):
+    ===================================
+     +0.05 +0.02 -0.01
+     +0.03  0.00 -0.02
+     +0.01 -0.01 -0.03
+    ===================================
+    (Needs ~40 chars wide, ~15 lines tall)
+
+Button 1: "Refresh Mesh"
+  Type: Touch Control
+  Action: Return Key Code
+  Touch Area: X=10, Y=265, Width=220, Height=45
+  VP Address: 0x1001
+  Key Value: 30
+
+Button 2: "Back"
+  Type: Touch Control
+  Action: Jump Screen
+  Touch Area: X=250, Y=265, Width=220, Height=45
+  Target Screen: 0
+
+==============================================================================
+SCREEN 22: PRESSURE ADVANCE CONTROL
+==============================================================================
+
+Background Image (22.bmp):
+  Size: 480 x 320 pixels
+
+  Text Labels:
+    Title: "Pressure Advance" at X=10, Y=10
+    Buttons row 1: "-0.01" "- 0.001" "+0.001" "+0.01"
+    Buttons row 2: "Reset" "Back"
+
+Text Display Variable:
+  VP Address: 0x3200
+  Position: X=10, Y=40
+  Size: Width=460, Height=150
+  Max Characters: 300
+  Font: ASCII_20
+  Color: White
+  Mode: Read/Write
+
+PA Adjustment Value Variable (HIDDEN):
+  VP Address: 0x3201
+  Type: Float / 32-bit
+  Not displayed, used for sending adjustment value
+
+Button Layout:
+  [-0.01]  [-0.001]  [+0.001]  [+0.01]    <- Row 1
+  [Reset]                       [Back]     <- Row 2
+
+Button: -0.01
+  Touch Area: X=10, Y=200, W=100, H=40
+  Action 1: Write Data to VP=0x3201, Value=-0.01 (as float/hex)
+  Action 2: Return Key Code, VP=0x1001, Value=33
+
+Button: -0.001
+  Touch Area: X=120, Y=200, W=100, H=40
+  Action 1: Write Data to VP=0x3201, Value=-0.001
+  Action 2: Return Key Code, VP=0x1001, Value=33
+
+Button: +0.001
+  Touch Area: X=230, Y=200, W=100, H=40
+  Action 1: Write Data to VP=0x3201, Value=+0.001
+  Action 2: Return Key Code, VP=0x1001, Value=33
+
+Button: +0.01
+  Touch Area: X=340, Y=200, W=100, H=40
+  Action 1: Write Data to VP=0x3201, Value=+0.01
+  Action 2: Return Key Code, VP=0x1001, Value=33
+
+Button: Reset
+  Touch Area: X=10, Y=265, W=150, H=45
+  Action: Return Key Code, VP=0x1001, Value=34
+
+Button: Back
+  Touch Area: X=320, Y=265, W=150, H=45
+  Action: Jump Screen, Target=0
+
+Note: If DGUS Tool doesn't support multi-action buttons,
+      PA_ADJUST buttons might need custom handling or
+      send adjustment via console command instead.
+
+==============================================================================
+SCREEN 23: INPUT SHAPER STATUS
+==============================================================================
+
+Background Image (23.bmp):
+  Text Labels:
+    Title: "Input Shaper" at X=10, Y=10
+    Buttons: "Enable" "Disable" "Back"
+
+Text Display:
+  VP: 0x3300
+  Position: X=10, Y=40
+  Size: Width=460, Height=180
+  Chars: 300
+  Font: ASCII_20
+  Color: Cyan or White
+
+Button: Show Config
+  Touch Area: X=10, Y=180, W=140, H=40
+  Action: Return Key Code, VP=0x1001, Value=36 (with data=1)
+
+Button: Enable
+  Touch Area: X=10, Y=230, W=140, H=40
+  Action 1: Write Data to VP=0x3301, Value=1
+  Action 2: Return Key Code, VP=0x1001, Value=36
+
+Button: Disable
+  Touch Area: X=160, Y=230, W=140, H=40
+  Action 1: Write Data to VP=0x3301, Value=0
+  Action 2: Return Key Code, VP=0x1001, Value=36
+
+Button: Back
+  Touch Area: X=310, Y=265, W=160, H=45
+  Action: Jump Screen, Target=0
+
+==============================================================================
+SCREEN 24: CALIBRATION TOOLS MENU (Navigation Hub)
+==============================================================================
+
+Background Image (24.bmp):
+  Simple button list design
+
+  Text Labels:
+    Title: "Calibration Tools" at X=10, Y=10
+    Buttons (vertically stacked):
+      "Bed Mesh" at Y=60
+      "Pressure Advance" at Y=110
+      "System Status" at Y=160
+      "Input Shaper" at Y=210
+      "Back to Main" at Y=270
+
+No variables needed - pure navigation!
+
+Button: Bed Mesh
+  Touch Area: X=40, Y=55, W=400, H=45
+  Action: Jump Screen, Target=20
+
+Button: Pressure Advance
+  Touch Area: X=40, Y=105, W=400, H=45
+  Action: Jump Screen, Target=22
+
+Button: System Status
+  Touch Area: X=40, Y=155, W=400, H=45
+  Action: Jump Screen, Target=21
+
+Button: Input Shaper
+  Touch Area: X=40, Y=205, W=400, H=45
+  Action: Jump Screen, Target=23
+
+Button: Back
+  Touch Area: X=40, Y=265, W=400, H=45
+  Action: Jump Screen, Target=0
+
+==============================================================================
+ADDING NAVIGATION TO MAIN SCREEN
+==============================================================================
+
+Find your main screen (usually 0, 1, or 2)
+
+Add Button: "Tools" or "Calibration"
+  Touch Area: [Find empty space on your main screen]
+             Suggested: X=370, Y=10, W=100, H=45 (top right)
+  Action: Jump Screen
+  Target Screen: 24 (Calibration Tools Menu)
+
+Optional: Add background image text/icon for this button
+
+==============================================================================
+VP ADDRESS SUMMARY
+==============================================================================
+
+Event Code:       0x1001  (Word, 2 bytes)  - ALL buttons send events here
+Mesh Display:     0x3000  (Text, 800 bytes)
+Status Display:   0x3100  (Text, 400 bytes)
+PA Display:       0x3200  (Text, 400 bytes)
+PA Adjust Value:  0x3201  (Float, 4 bytes)
+Shaper Display:   0x3300  (Text, 400 bytes)
+Shaper Toggle:    0x3301  (Word, 2 bytes)
+
+==============================================================================
+EVENT CODE REFERENCE
+==============================================================================
+
+Event 30 (0x1E): VIEW_MESH           - Show bed mesh
+Event 31 (0x1F): MESH_PROFILE_SELECT - Load mesh profile
+Event 32 (0x20): FIRMWARE_RESTART    - Restart Klipper
+Event 33 (0x21): PA_ADJUST           - Adjust PA (needs data from 0x3201)
+Event 34 (0x22): PA_RESET            - Reset PA to default
+Event 35 (0x23): VIEW_SYSTEM_STATUS  - Show system status
+Event 36 (0x24): TOGGLE_INPUT_SHAPER - Enable/disable shaper (needs 0x3301)
+
+==============================================================================
+FONT RECOMMENDATIONS
+==============================================================================
+
+Title text: 24-32pt bold
+Button labels: 16-20pt
+Data display: 16-20pt monospace if available
+Small text: 12-14pt
+
+Common DGUS fonts:
+- ASCII_12, ASCII_16, ASCII_20, ASCII_24, ASCII_32
+- Check your DGUS project for available fonts
+
+==============================================================================
+COLOR PALETTE SUGGESTIONS
+==============================================================================
+
+Background: #1a1a1a (dark gray) or #000000 (black)
+Title text: #FFFFFF (white) or #00AAFF (cyan)
+Data text:  #00FF00 (green) for good values
+            #FFFF00 (yellow) for warnings
+            #FF0000 (red) for errors
+Buttons:    #333333 (dark gray fill)
+            #FFFFFF (white border)
+            #FFFFFF (white text)
+
+==============================================================================
+TESTING CHECKLIST
+==============================================================================
+
+Before flashing to LCD:
+[ ] All .bmp files are exactly 480x320 pixels
+[ ] VP addresses don't conflict with existing project
+[ ] Event codes are correct (30-36)
+[ ] Touch areas don't overlap
+[ ] All files included in .tft archive
+[ ] Files are in ROOT of .tft (not in subfolder)
+
+After flashing:
+[ ] LCD powers on normally
+[ ] Can navigate to new screens
+[ ] Buttons respond (check logs)
+[ ] Text displays show data
+[ ] Can return to main screen
+
+If issues:
+[ ] Check journalctl -u KlipperLCD.service -f
+[ ] Verify VP addresses match
+[ ] Test via console commands first (SHOW_STATUS, etc.)
+[ ] Re-flash with verbose logging enabled
+
+==============================================================================
