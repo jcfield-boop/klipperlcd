@@ -1,15 +1,26 @@
+# KlipperLCD Service Template
+# This file is a template - DO NOT install it directly
+# Use install.sh to automatically generate and install the service file
+#
+# The install.sh script will replace the following placeholders:
+#   %USER% - Current system user
+#   %HOME% - User's home directory
+#   %INSTALL_DIR% - KlipperLCD installation directory
+#   %CONFIG_FILE% - Path to KlipperLCD.cfg
+
 [Unit]
- Description=KlipperLCD Service
- After=moonraker.service
+Description=KlipperLCD Service - LCD interface for Klipper 3D printers
+After=moonraker.service
 
 [Service]
- Type=simple
- User=biqu
- Restart=always
- RestartSec=1
- ExecStart=/bin/sh -c '/usr/bin/env python3 /home/biqu/KlipperLCD/main.py  > /tmp/KlipperLCD.log 2>&1'
+Type=simple
+User=%USER%
+WorkingDirectory=%INSTALL_DIR%
+Restart=always
+RestartSec=5
+ExecStart=/usr/bin/env python3 %INSTALL_DIR%/main.py --config %CONFIG_FILE%
 
 [Install]
- WantedBy=multi-user.target
+WantedBy=multi-user.target
 
 

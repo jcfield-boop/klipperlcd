@@ -99,7 +99,7 @@ class LCDEvents():
 
 
 class LCD:
-    def __init__(self, port=None, baud=115200, callback=None):
+    def __init__(self, port=None, baud=115200, callback=None, config=None):
         self.addr_func_map = {
             0x1002: self._MainPage,          
             0x1004: self._Adjustment,        
@@ -145,9 +145,31 @@ class LCD:
         self.evt = LCDEvents()
         self.callback = callback
         self.printer = _printerData()
-                         # PLA, ABS, PETG, TPU, PROBE 
-        self.preset_temp     = [200, 245,  225, 220, 200]
-        self.preset_bed_temp = [ 60, 100,   70,  60,  60]
+
+        # Load configuration from config object or use defaults
+        if config:
+            # Material temperature presets from config (PLA, ABS, PETG, TPU, PROBE)
+            self.preset_temp     = config.presets.get_hotend_temps()
+            self.preset_bed_temp = config.presets.get_bed_temps()
+            # Adjustment units from config
+            self.temp_unit = config.adjustments.temp_unit
+            self.move_unit = config.adjustments.move_unit
+            self.speed_unit = config.adjustments.speed_unit
+            self.accel_unit = config.adjustments.accel_unit
+            # Filament settings from config
+            self.load_len = config.filament.load_length
+            self.feedrate_e = config.filament.feedrate
+        else:
+            # Default values (backward compatibility)
+            self.preset_temp     = [200, 245,  225, 220, 200]  # PLA, ABS, PETG, TPU, PROBE
+            self.preset_bed_temp = [ 60, 100,   70,  60,  60]
+            self.temp_unit = 10
+            self.move_unit = 1
+            self.speed_unit = 10
+            self.accel_unit = 100
+            self.load_len = 25
+            self.feedrate_e = 300
+
         self.preset_index    = 0
         # UART communication parameters
         self.ser = serial.Serial()
@@ -165,17 +187,11 @@ class LCD:
         self.waiting = None
         # Adjusting temp and move axis params
         self.adjusting = 'Hotend'
-        self.temp_unit = 10
-        self.move_unit = 1
-        self.load_len = 25
-        self.feedrate_e = 300
         self.z_offset_unit = None
         self.light = False
         # Adjusting speed
         self.speed_adjusting = None
-        self.speed_unit = 10
         self.adjusting_max = False
-        self.accel_unit = 100
         # Probe /Level mode
         self.probe_mode = False
         # Thumbnail

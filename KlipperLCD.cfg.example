@@ -1,0 +1,145 @@
+# KlipperLCD Configuration File - Example
+# This file configures the KlipperLCD service for Elegoo Neptune 3 Pro LCD screens
+#
+# Installation:
+#   1. Copy this file to ~/printer_data/config/KlipperLCD.cfg
+#   2. Edit the values below to match your setup
+#   3. Restart KlipperLCD service: sudo systemctl restart KlipperLCD.service
+#
+# The config file in ~/printer_data/config/ will be visible in Mainsail's
+# configuration editor, making it easy to update settings through the web interface.
+
+# ==============================================================================
+# Connection Settings
+# ==============================================================================
+[connection]
+# Serial port for the LCD screen
+# Common values: /dev/ttyUSB0, /dev/ttyACM0, /dev/serial/by-id/...
+# Use 'ls /dev/tty*' to list available ports
+serial_port = /dev/ttyUSB0
+
+# Serial baud rate for LCD communication
+# Default: 115200 (do not change unless you know what you're doing)
+# Valid values: 9600, 19200, 38400, 57600, 115200, 230400, 460800, 921600
+baud_rate = 115200
+
+# ==============================================================================
+# Klipper/Moonraker Settings
+# ==============================================================================
+[klipper]
+# Moonraker server host address
+# Default: 127.0.0.1 (localhost)
+# Use IP address if Moonraker is on a different machine
+moonraker_host = 127.0.0.1
+
+# Moonraker server port
+# Default: 80 (standard Moonraker HTTP port)
+# Change if you've configured Moonraker to use a different port
+moonraker_port = 80
+
+# Moonraker API key (if required)
+# Default: XXXXXX (no API key)
+# Set this if you've configured Moonraker to require authentication
+# Find your API key in ~/printer_data/config/moonraker.conf
+moonraker_api_key = XXXXXX
+
+# Path to Klipper's Unix socket
+# Default: ~/printer_data/comms/klippy.sock
+# This is the standard location for Klipper installations
+# Tilde (~) will be expanded to your home directory
+klippy_socket = ~/printer_data/comms/klippy.sock
+
+# ==============================================================================
+# Path Settings
+# ==============================================================================
+[paths]
+# KlipperLCD installation directory
+# Default: ~/KlipperLCD
+# Change if you've installed KlipperLCD in a different location
+install_dir = ~/KlipperLCD
+
+# Log file location
+# Default: /tmp/KlipperLCD.log
+# This file contains KlipperLCD service logs for debugging
+log_file = /tmp/KlipperLCD.log
+
+# ==============================================================================
+# Material Temperature Presets
+# ==============================================================================
+[presets]
+# Temperature presets for different materials (in Celsius)
+# These values appear as quick-select options on the LCD screen
+# Adjust these to match your preferred printing temperatures
+
+# PLA (Polylactic Acid) - Common everyday filament
+pla_hotend = 200
+pla_bed = 60
+
+# ABS (Acrylonitrile Butadiene Styrene) - Strong, heat-resistant
+abs_hotend = 245
+abs_bed = 100
+
+# PETG (Polyethylene Terephthalate Glycol) - Strong, flexible
+petg_hotend = 225
+petg_bed = 70
+
+# TPU (Thermoplastic Polyurethane) - Flexible filament
+tpu_hotend = 220
+tpu_bed = 60
+
+# Probe/Mesh Bed Leveling temperature
+# Temperature used during automatic bed leveling/mesh calibration
+probe_hotend = 200
+probe_bed = 60
+
+# ==============================================================================
+# UI Adjustment Increments
+# ==============================================================================
+[adjustments]
+# Temperature adjustment increment (in Celsius)
+# How much temperature changes when using +/- buttons on LCD
+# Default: 10 (each press changes temp by ±10°C)
+temp_unit = 10
+
+# Movement increment (in millimeters)
+# Distance moved when using axis movement buttons
+# Default: 1 (each press moves ±1mm)
+# Common values: 0.1, 1, 10
+move_unit = 1
+
+# Print speed adjustment increment (in percent)
+# How much speed changes when using +/- buttons
+# Default: 10 (each press changes speed by ±10%)
+speed_unit = 10
+
+# Acceleration adjustment increment (in mm/s²)
+# How much acceleration changes when adjusting
+# Default: 100 (each press changes accel by ±100 mm/s²)
+accel_unit = 100
+
+# ==============================================================================
+# Filament Load/Unload Settings
+# ==============================================================================
+[filament]
+# Filament load/unload length (in millimeters)
+# How much filament to extrude during load/unload operations
+# Default: 25 (25mm per operation)
+# Adjust based on your hotend's heatbreak length
+load_length = 25
+
+# Filament load/unload feedrate (in mm/min)
+# Speed at which filament is loaded/unloaded
+# Default: 300 (5mm/s)
+# Too fast may cause grinding, too slow may cause stringing
+feedrate = 300
+
+# ==============================================================================
+# Configuration Notes
+# ==============================================================================
+# - After making changes, restart the service: sudo systemctl restart KlipperLCD.service
+# - Check service status: sudo systemctl status KlipperLCD.service
+# - View logs: journalctl -u KlipperLCD.service -f
+# - This file can be edited through Mainsail's configuration interface
+# - Invalid values will be logged with warnings and defaults will be used
+# - Temperature presets are loaded when LCD initializes
+# - All path values support tilde (~) expansion to home directory

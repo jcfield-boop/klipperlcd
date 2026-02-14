@@ -1,18 +1,36 @@
-import getopt
+import argparse
 import sys
 import time
 import base64
 from threading import Thread
 from datetime import timedelta
 
+from config import KlipperLCDConfig
 from printer import PrinterData
 from lcd import LCD, _printerData
 
 class KlipperLCD ():
-    def __init__(self):
-        self.lcd = LCD("/dev/ttyUSB0", callback=self.lcd_callback)
+    def __init__(self, config=None):
+        # Load configuration
+        self.config = config if config else KlipperLCDConfig()
+
+        # Initialize LCD with config
+        self.lcd = LCD(
+            self.config.connection.serial_port,
+            baud=self.config.connection.baud_rate,
+            callback=self.lcd_callback,
+            config=self.config
+        )
         self.lcd.start()
-        self.printer = PrinterData('XXXXXX', URL=("127.0.0.1"), klippy_sock='/home/biqu/printer_data/comms/klippy.sock', callback=self.printer_callback)
+
+        # Initialize printer data with config
+        self.printer = PrinterData(
+            self.config.klipper.moonraker_api_key,
+            host=self.config.klipper.moonraker_host,
+            port=self.config.klipper.moonraker_port,
+            klippy_sock=self.config.klipper.klippy_socket,
+            callback=self.printer_callback
+        )
         self.running = False
         self.wait_probe = False
         self.thumbnail_inprogress = False
@@ -221,6 +239,24 @@ class KlipperLCD ():
             print("lcd_callback event not recognised %d" % evt)
 
 if __name__ == "__main__":
-    x = KlipperLCD()
+    # Parse command-line arguments
+    parser = argparse.ArgumentParser(description='KlipperLCD Service - LCD interface for Klipper 3D printers')
+    parser.add_argument('--config', '-c', type=str, help='Path to KlipperLCD.cfg configuration file')
+    parser.add_argument('--generate-config', type=str, metavar='PATH',
+                       help='Generate a sample configuration file at the specified path')
+    args = parser.parse_args()
 
+    # Generate config if requested
+    if args.generate_config:
+        config = KlipperLCDConfig()
+        config.generate_sample_config(args.generate_config)
+        print(f"Sample configuration generated at: {args.generate_config}")
+        print("Edit this file to customize your settings, then restart KlipperLCD service")
+        sys.exit(0)
+
+    # Load configuration
+    config = KlipperLCDConfig(args.config)
+
+    # Start KlipperLCD
+    x = KlipperLCD(config)
     x.start()

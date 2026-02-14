@@ -101,49 +101,82 @@ A more detailed guide on LCD screen firmware update can be found on the [Elegoo 
     git clone https://github.com/joakimtoe/KlipperLCD
     cd KlipperLCD
 
-### Configure the code
-* Open `main.py` and find the `class KlipperLCD` declaration:
-```python
-class KlipperLCD ():
-    def __init__(self):
-        ...
-        LCD("/dev/ttyAMA0", callback=self.lcd_callback)
-        ...
-        PrinterData('XXXXXX', URL=("127.0.0.1"), klippy_sock='/home/pi/printer_data/comms/klippy.sock')
-```
-* If your UART is something other than the default `ttyAMA0`, replace the string `"/dev/ttyAMA0"` to match your UART selection. 
+### Installation (Automated - Recommended)
+The easiest way to install and configure KlipperLCD is using the automated installation script:
 
+    chmod +x install.sh
+    ./install.sh
 
-    > **_Note_**: If using a USB to UART converter to connect your screen to Klipper, the converter usually shows up in Linux as `"/dev/ttyUSB0"`.
+The installation script will:
+* Automatically detect your username and home directory
+* Generate a configuration file at `~/printer_data/config/KlipperLCD.cfg`
+* Install the systemd service with correct paths
+* Optionally enable and start the service
 
+After installation, you can customize your settings by editing `~/printer_data/config/KlipperLCD.cfg`. This file will be visible in Mainsail's configuration editor for easy access through the web interface.
 
-* Or if your Klipper socket is called something else, replace `klippy_sock` string `"/home/pi/printer_data/comms/klippy.sock"` with the path and name of your klipper socket file.
+### Configuration
+All KlipperLCD settings are now managed through the `KlipperLCD.cfg` configuration file located at `~/printer_data/config/KlipperLCD.cfg`.
 
-### Run the code
-Once the LCD touch screen is wired to the Raspberry Pi, Klipper socket API is enabled and the KlipperLCD class is configured according to your wiring you can fire up the code!
+**Important settings to review:**
+* `serial_port` - Set this to your LCD's serial port (e.g., `/dev/ttyUSB0`, `/dev/ttyAMA0`)
+* `moonraker_api_key` - Set if your Moonraker requires authentication
+* `klippy_socket` - Path to Klipper's socket (default is usually correct)
+* Material temperature presets (PLA, ABS, PETG, TPU)
+
+> **_Note_**: If using a USB to UART converter, the port is typically `/dev/ttyUSB0`. For direct Raspberry Pi UART connection, use `/dev/ttyAMA0`.
+
+You can generate a sample configuration file manually:
+
+    python3 main.py --generate-config ~/printer_data/config/KlipperLCD.cfg
+
+For a complete configuration reference, see `KlipperLCD.cfg.example` which includes detailed documentation for all settings.
+
+### Manual Installation (Advanced)
+If you prefer manual installation or need custom configuration:
+
+1. Edit `KlipperLCD.cfg` to match your setup
+2. Manually create and install the service file with your paths
+3. See the automated `install.sh` script for reference
+
+### Testing Your Configuration
+Before enabling the service, test that everything works:
 
     python3 main.py
 
-Congratulations! You can now use the touch screen!
+If you see no errors and your LCD screen initializes, the configuration is correct!
 
-### Run KlipperLCD service at boot
-If the path of `main.py` is something else than `/home/pi/KlipperLCD/main.py` or your user is not `pi`. Open and edit `KlipperLCD.service` to fit your needs.
+### Managing the Service
+After installation, use these commands to manage KlipperLCD:
 
-Enable the service to automatically start at boot:
+**Start the service:**
 
-    sudo chmod +x main.py
+    sudo systemctl start KlipperLCD.service
 
-    sudo chmod +x KlipperLCD.service
+**Stop the service:**
 
-    sudo mv KlipperLCD.service /etc/systemd/system/KlipperLCD.service
+    sudo systemctl stop KlipperLCD.service
 
-    sudo chmod 644 /etc/systemd/system/KlipperLCD.service
+**Restart after config changes:**
 
-    sudo systemctl daemon-reload
+    sudo systemctl restart KlipperLCD.service
 
-    sudo systemctl enable KlipperLCD.service
+**Check service status:**
 
-    sudo reboot
+    sudo systemctl status KlipperLCD.service
+
+**View logs:**
+
+    journalctl -u KlipperLCD.service -f
+
+### Editing Configuration Through Mainsail
+The configuration file is located in `~/printer_data/config/`, making it accessible through Mainsail's web interface:
+
+1. Open Mainsail in your browser
+2. Navigate to the "Machine" tab
+3. Find `KlipperLCD.cfg` in the configuration files list
+4. Edit the file through the web interface
+5. Save changes and restart the service: `sudo systemctl restart KlipperLCD.service`
 
 ## Console
 The console is enabled by default and can be accessed by clicking center top of the main screen or by clicking the thumbnail area while printing.

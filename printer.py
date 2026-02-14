@@ -230,7 +230,11 @@ class PrinterData:
 	SHORT_BUILD_VERSION = "1.00"
 	CORP_WEBSITE_E = "https://www.klipper3d.org/"
 
-	def __init__(self, API_Key, URL='127.0.0.1', klippy_sock='/home/pi/printer_data/comms/klippy.sock', callback=None):
+	def __init__(self, API_Key, host='127.0.0.1', port=80, klippy_sock='/home/pi/printer_data/comms/klippy.sock', callback=None, URL=None):
+		# Support legacy URL parameter for backward compatibility
+		if URL is not None:
+			host = URL
+
 		self.response_callback = callback
 		self.klippy_sock      = klippy_sock
 		self.BABY_Z_VAR       = 0
@@ -258,7 +262,7 @@ class PrinterData:
 		self.max_accel_to_decel     = None
 		self.square_corner_velocity = None
 		
-		self.op = MoonrakerSocket(URL, 80, API_Key)
+		self.op = MoonrakerSocket(host, port, API_Key)
 		print(self.op.base_address)
 
 		self.klippy_start()
