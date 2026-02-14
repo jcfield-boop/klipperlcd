@@ -204,6 +204,87 @@ Slicer: PrusaSlicer 2.6.1
 
 ---
 
+## Console Shortcuts (Immediate Access)
+
+While waiting for custom LCD firmware with UI buttons, you can access all enhanced features **right now** via console shortcuts!
+
+### How to Access Console
+1. Tap center top of main screen (or thumbnail area during print)
+2. Use on-screen keyboard to type commands
+3. View results in console output area
+
+### Available Shortcuts
+
+| Command | Purpose | Example Output |
+|---------|---------|----------------|
+| `SHOW_MESH` | Display bed mesh visualization | Formatted grid with min/max/range and quality assessment |
+| `SHOW_STATUS` | View Klipper state & MCU temp | Current state (Ready/Error), MCU temperature, warnings |
+| `SHOW_PA` | Show Pressure Advance info | Current PA value with typical ranges for bowden/direct drive |
+| `SHOW_SHAPER` | Display Input Shaper config | X/Y axis shaper types and frequencies, enabled status |
+| `PA_ADJUST <n>` | Adjust Pressure Advance | `PA_ADJUST 0.001` (increase) or `PA_ADJUST -0.01` (decrease) |
+| `PA_RESET` | Reset PA to default (0.0) | Confirms reset value |
+| `HELP_LCD` | Show all shortcuts | Lists all available console commands |
+
+### Usage Examples
+
+**View Bed Mesh:**
+```
+> SHOW_MESH
+Bed Mesh (default):
+===================================
+ +0.05 +0.02 -0.01
+ +0.03  0.00 -0.02
+ +0.01 -0.01 -0.03
+===================================
+Min: -0.030mm  Max: +0.050mm
+Range: 0.080mm
+Quality: Good
+```
+
+**Check System Status:**
+```
+> SHOW_STATUS
+System Status:
+Ready
+
+MCU Temp: 45.2°C
+```
+
+**Fine-tune Pressure Advance:**
+```
+> SHOW_PA
+Pressure Advance: 0.0350
+
+Typical ranges:
+  Bowden: 0.3 - 0.7
+  Direct Drive: 0.02 - 0.1
+
+Status: Typical for direct drive
+
+> PA_ADJUST 0.001
+Pressure Advance adjusted to: 0.0360
+```
+
+**View Input Shaper:**
+```
+> SHOW_SHAPER
+Input Shaper: ENABLED
+
+X-axis: MZV
+  Frequency: 42.5 Hz
+
+Y-axis: MZV
+  Frequency: 38.2 Hz
+```
+
+### Important Notes
+- All shortcuts are **case-insensitive** (SHOW_MESH, show_mesh, Show_Mesh all work)
+- All standard Klipper GCode commands still work normally
+- Console shortcuts provide immediate access while custom LCD firmware is being developed
+- See `TFT_FIRMWARE_GUIDE.md` for creating custom LCD screens with dedicated buttons
+
+---
+
 ## Implementation Details for Developers
 
 ### New PrinterData Methods

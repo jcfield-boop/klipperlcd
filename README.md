@@ -180,6 +180,17 @@ The console is enabled by default and can be accessed by clicking center top of 
 
 The console enables sending commands and will display all gcode responses and information from Klipper normally found in the console tab in Mainsail or Fluidd.
 
+### Enhanced Console Shortcuts
+KlipperLCD includes convenient shortcuts for advanced features:
+- `SHOW_MESH` - View bed mesh visualization
+- `SHOW_STATUS` - System status & MCU temperature
+- `SHOW_PA` - Pressure Advance info and tuning
+- `SHOW_SHAPER` - Input Shaper configuration
+- `PA_ADJUST <value>` - Fine-tune Pressure Advance (e.g., `PA_ADJUST 0.001`)
+- `HELP_LCD` - Show all available shortcuts
+
+See `FEATURES.md` for detailed documentation of all enhanced features.
+
 <p float="left">
     <img src="img/console.PNG" height="400">
     <img src="img/console_key.PNG" height="400">

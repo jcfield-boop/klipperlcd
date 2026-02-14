@@ -237,7 +237,69 @@ class KlipperLCD ():
             print("SET_VELOCITY_LIMIT SQUARE_CORNER_VELOCITY=%.1f" % data)
             self.printer.sendGCode("SET_VELOCITY_LIMIT SQUARE_CORNER_VELOCITY=%.1f" % data)
         elif evt == self.lcd.evt.CONSOLE:
-            self.printer.sendGCode(data)
+            # Check for console shortcuts first
+            command = data.strip().upper()
+
+            if command == "SHOW_MESH":
+                mesh_data = self.printer.get_bed_mesh_data()
+                if mesh_data:
+                    formatted_mesh = format_bed_mesh_grid(mesh_data)
+                    self.lcd.write_console(formatted_mesh)
+                else:
+                    self.lcd.write_console("No bed mesh data available.\nRun BED_MESH_CALIBRATE first.")
+            elif command == "SHOW_STATUS":
+                state_info = self.printer.get_klipper_state()
+                mcu_stats = self.printer.get_mcu_stats()
+                status_text, color = format_klipper_state(state_info)
+                stats_text = format_system_stats(mcu_stats)
+                output = f"System Status:\n{status_text}\n\n{stats_text}"
+                self.lcd.write_console(output)
+            elif command == "SHOW_PA":
+                pa_value = self.printer.get_pressure_advance()
+                if pa_value is not None:
+                    formatted_pa = format_pressure_advance_info(pa_value)
+                    self.lcd.write_console(formatted_pa)
+                else:
+                    self.lcd.write_console("Could not retrieve Pressure Advance value")
+            elif command == "SHOW_SHAPER":
+                shaper_config = self.printer.get_input_shaper_config()
+                if shaper_config:
+                    formatted_shaper = format_input_shaper_info(shaper_config)
+                    self.lcd.write_console(formatted_shaper)
+                else:
+                    self.lcd.write_console("Input Shaper not configured")
+            elif command.startswith("PA_ADJUST "):
+                try:
+                    adjustment = float(command.split()[1])
+                    current_pa = self.printer.get_pressure_advance()
+                    if current_pa is not None:
+                        new_pa = max(0, current_pa + adjustment)
+                        self.printer.set_pressure_advance(new_pa)
+                        self.lcd.write_console(f"Pressure Advance adjusted to: {new_pa:.4f}")
+                    else:
+                        self.lcd.write_console("Could not retrieve current PA value")
+                except (IndexError, ValueError):
+                    self.lcd.write_console("Usage: PA_ADJUST <value>\nExample: PA_ADJUST 0.001")
+            elif command == "PA_RESET":
+                default_pa = 0.0
+                self.printer.set_pressure_advance(default_pa)
+                self.lcd.write_console(f"Pressure Advance reset to: {default_pa:.4f}")
+            elif command == "HELP_LCD":
+                help_text = """KlipperLCD Console Shortcuts:
+
+SHOW_MESH     - View bed mesh
+SHOW_STATUS   - System status & MCU temp
+SHOW_PA       - Pressure Advance info
+SHOW_SHAPER   - Input Shaper config
+PA_ADJUST <n> - Adjust PA (±0.001, ±0.01)
+PA_RESET      - Reset PA to 0.0
+HELP_LCD      - This help message
+
+All standard Klipper GCode commands also work."""
+                self.lcd.write_console(help_text)
+            else:
+                # Not a shortcut, send as regular GCode
+                self.printer.sendGCode(data)
         # System Status & Visualization Events
         elif evt == self.lcd.evt.VIEW_MESH:
             mesh_data = self.printer.get_bed_mesh_data()
