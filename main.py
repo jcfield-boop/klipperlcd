@@ -10,9 +10,9 @@ from lcd import LCD, _printerData
 
 class KlipperLCD ():
     def __init__(self):
-        self.lcd = LCD("/dev/ttyAMA0", callback=self.lcd_callback)
+        self.lcd = LCD("/dev/ttyUSB0", callback=self.lcd_callback)
         self.lcd.start()
-        self.printer = PrinterData('XXXXXX', URL=("127.0.0.1"), klippy_sock='/home/pi/printer_data/comms/klippy.sock', callback=self.printer_callback)
+        self.printer = PrinterData('XXXXXX', URL=("127.0.0.1"), klippy_sock='/home/biqu/printer_data/comms/klippy.sock', callback=self.printer_callback)
         self.running = False
         self.wait_probe = False
         self.thumbnail_inprogress = False
@@ -222,4 +222,5 @@ class KlipperLCD ():
 
 if __name__ == "__main__":
     x = KlipperLCD()
+
     x.start()
