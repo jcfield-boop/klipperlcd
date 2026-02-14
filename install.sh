@@ -49,6 +49,28 @@ if [ "$EUID" -eq 0 ]; then
     exit 1
 fi
 
+# Check and install dependencies
+print_info "Checking Python dependencies..."
+
+MISSING_DEPS=()
+
+# Check for required Python modules
+python3 -c "import serial" 2>/dev/null || MISSING_DEPS+=("python3-serial")
+python3 -c "import requests" 2>/dev/null || MISSING_DEPS+=("python3-requests")
+python3 -c "from PIL import Image" 2>/dev/null || MISSING_DEPS+=("python3-pil")
+
+if [ ${#MISSING_DEPS[@]} -gt 0 ]; then
+    print_warn "Missing dependencies detected: ${MISSING_DEPS[*]}"
+    print_info "Installing dependencies (requires sudo)..."
+
+    sudo apt-get update -qq
+    sudo apt-get install -y ${MISSING_DEPS[@]}
+
+    print_info "✓ Dependencies installed"
+else
+    print_info "✓ All dependencies already installed"
+fi
+
 # Create config directory if it doesn't exist
 if [ ! -d "${CONFIG_DIR}" ]; then
     print_warn "Config directory doesn't exist, creating: ${CONFIG_DIR}"
