@@ -673,3 +673,158 @@ class PrinterData:
 
 	def setZOffset(self, offset):
 		self.sendGCode('SET_GCODE_OFFSET Z=%s MOVE=1' % offset)
+
+	# ===== System Status Methods =====
+
+	def get_klipper_state(self):
+		"""Get current Klipper state (ready, error, shutdown, etc.)"""
+		try:
+			info = self.getREST('/printer/info')
+			if info and 'result' in info:
+				state = info['result'].get('state', 'unknown')
+				state_message = info['result'].get('state_message', '')
+				return {'state': state, 'message': state_message}
+		except Exception as e:
+			print(f"Error getting Klipper state: {e}")
+		return {'state': 'unknown', 'message': ''}
+
+	def get_mcu_stats(self):
+		"""Get MCU temperature and statistics"""
+		try:
+			data = self.getREST('/printer/objects/query?mcu')
+			if data and 'result' in data and 'status' in data['result']:
+				mcu_data = data['result']['status'].get('mcu', {})
+				return {
+					'mcu_temp': mcu_data.get('mcu_temp', None),
+					'last_stats': mcu_data.get('last_stats', {})
+				}
+		except Exception as e:
+			print(f"Error getting MCU stats: {e}")
+		return {'mcu_temp': None, 'last_stats': {}}
+
+	def firmware_restart(self):
+		"""Restart Klipper firmware"""
+		self.postREST('/printer/firmware_restart', json={})
+
+	# ===== Bed Mesh Methods =====
+
+	def get_bed_mesh_data(self):
+		"""Get current bed mesh data with points and statistics"""
+		try:
+			data = self.getREST('/printer/objects/query?bed_mesh')
+			if data and 'result' in data and 'status' in data['result']:
+				mesh_data = data['result']['status'].get('bed_mesh', {})
+				probed_matrix = mesh_data.get('probed_matrix', [])
+
+				if not probed_matrix or not probed_matrix[0]:
+					return None
+
+				# Calculate min, max, range
+				all_points = [point for row in probed_matrix for point in row]
+				mesh_min = min(all_points)
+				mesh_max = max(all_points)
+				mesh_range = mesh_max - mesh_min
+
+				return {
+					'points': probed_matrix,
+					'min': mesh_min,
+					'max': mesh_max,
+					'range': mesh_range,
+					'profile_name': mesh_data.get('profile_name', 'default')
+				}
+		except Exception as e:
+			print(f"Error getting bed mesh data: {e}")
+		return None
+
+	def get_mesh_profiles(self):
+		"""Get list of saved bed mesh profiles"""
+		try:
+			data = self.getREST('/printer/objects/query?bed_mesh')
+			if data and 'result' in data and 'status' in data['result']:
+				mesh_data = data['result']['status'].get('bed_mesh', {})
+				profiles = mesh_data.get('profiles', {})
+				return list(profiles.keys()) if profiles else []
+		except Exception as e:
+			print(f"Error getting mesh profiles: {e}")
+		return []
+
+	def load_mesh_profile(self, profile_name):
+		"""Load a bed mesh profile"""
+		self.sendGCode(f'BED_MESH_PROFILE LOAD={profile_name}')
+
+	# ===== Pressure Advance Methods =====
+
+	def get_pressure_advance(self):
+		"""Get current pressure advance value"""
+		try:
+			data = self.getREST('/printer/objects/query?extruder')
+			if data and 'result' in data and 'status' in data['result']:
+				extruder_data = data['result']['status'].get('extruder', {})
+				return extruder_data.get('pressure_advance', 0.0)
+		except Exception as e:
+			print(f"Error getting pressure advance: {e}")
+		return 0.0
+
+	def set_pressure_advance(self, value):
+		"""Set pressure advance value"""
+		self.sendGCode(f'SET_PRESSURE_ADVANCE ADVANCE={value:.4f}')
+
+	# ===== Input Shaper Methods =====
+
+	def get_input_shaper_config(self):
+		"""Get input shaper configuration"""
+		try:
+			data = self.getREST('/printer/objects/query?input_shaper')
+			if data and 'result' in data and 'status' in data['result']:
+				shaper_data = data['result']['status'].get('input_shaper', {})
+				return {
+					'shaper_type_x': shaper_data.get('shaper_type_x', 'none'),
+					'shaper_freq_x': shaper_data.get('shaper_freq_x', 0.0),
+					'shaper_type_y': shaper_data.get('shaper_type_y', 'none'),
+					'shaper_freq_y': shaper_data.get('shaper_freq_y', 0.0),
+					'damping_ratio_x': shaper_data.get('damping_ratio_x', 0.1),
+					'damping_ratio_y': shaper_data.get('damping_ratio_y', 0.1)
+				}
+		except Exception as e:
+			print(f"Error getting input shaper config: {e}")
+		return None
+
+	def toggle_input_shaper(self, enabled):
+		"""Enable or disable input shaper"""
+		if enabled:
+			# Re-enable with configured values
+			config = self.get_input_shaper_config()
+			if config:
+				self.sendGCode(f'SET_INPUT_SHAPER SHAPER_TYPE_X={config["shaper_type_x"]} '
+							  f'SHAPER_FREQ_X={config["shaper_freq_x"]:.1f} '
+							  f'SHAPER_TYPE_Y={config["shaper_type_y"]} '
+							  f'SHAPER_FREQ_Y={config["shaper_freq_y"]:.1f}')
+		else:
+			# Disable by setting frequency to 0
+			self.sendGCode('SET_INPUT_SHAPER SHAPER_FREQ_X=0 SHAPER_FREQ_Y=0')
+
+	# ===== File Metadata Methods =====
+
+	def get_file_metadata(self, filename):
+		"""Get metadata for a specific gcode file"""
+		try:
+			# URL encode the filename
+			import urllib.parse
+			encoded_filename = urllib.parse.quote(filename)
+			data = self.getREST(f'/server/files/metadata?filename={encoded_filename}')
+			if data and 'result' in data:
+				metadata = data['result']
+				return {
+					'estimated_time': metadata.get('estimated_time', 0),
+					'filament_total': metadata.get('filament_total', 0),
+					'filament_weight_total': metadata.get('filament_weight_total', 0),
+					'layer_height': metadata.get('layer_height', 0),
+					'first_layer_height': metadata.get('first_layer_height', 0),
+					'layer_count': metadata.get('layer_count', 0) or metadata.get('object_height', 0) / metadata.get('layer_height', 0.2) if metadata.get('layer_height', 0) > 0 else 0,
+					'slicer': metadata.get('slicer', 'Unknown'),
+					'slicer_version': metadata.get('slicer_version', ''),
+					'thumbnails': metadata.get('thumbnails', [])
+				}
+		except Exception as e:
+			print(f"Error getting file metadata: {e}")
+		return None

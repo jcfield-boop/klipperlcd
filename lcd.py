@@ -96,6 +96,14 @@ class LCDEvents():
     SQUARE_CORNER_VELOCITY = 27
     THUMBNAIL      = 28
     CONSOLE        = 29
+    # System status and visualization events
+    VIEW_MESH      = 30
+    MESH_PROFILE_SELECT = 31
+    FIRMWARE_RESTART = 32
+    PA_ADJUST      = 33
+    PA_RESET       = 34
+    VIEW_SYSTEM_STATUS = 35
+    TOGGLE_INPUT_SHAPER = 36
 
 
 class LCD:

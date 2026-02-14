@@ -8,6 +8,9 @@ from datetime import timedelta
 from config import KlipperLCDConfig
 from printer import PrinterData
 from lcd import LCD, _printerData
+from visualization import (format_bed_mesh_grid, format_klipper_state,
+                           format_pressure_advance_info, format_input_shaper_info,
+                           format_file_metadata, format_system_stats)
 
 class KlipperLCD ():
     def __init__(self, config=None):
@@ -235,6 +238,47 @@ class KlipperLCD ():
             self.printer.sendGCode("SET_VELOCITY_LIMIT SQUARE_CORNER_VELOCITY=%.1f" % data)
         elif evt == self.lcd.evt.CONSOLE:
             self.printer.sendGCode(data)
+        # System Status & Visualization Events
+        elif evt == self.lcd.evt.VIEW_MESH:
+            mesh_data = self.printer.get_bed_mesh_data()
+            if mesh_data:
+                formatted_mesh = format_bed_mesh_grid(mesh_data)
+                print(formatted_mesh)
+                # Send to LCD console or display
+                self.lcd.write_console(formatted_mesh)
+            else:
+                self.lcd.write_console("No bed mesh data available.\nRun BED_MESH_CALIBRATE first.")
+        elif evt == self.lcd.evt.MESH_PROFILE_SELECT:
+            if data:
+                self.printer.load_mesh_profile(data)
+                print(f"Loaded mesh profile: {data}")
+        elif evt == self.lcd.evt.FIRMWARE_RESTART:
+            print("Restarting Klipper firmware...")
+            self.printer.firmware_restart()
+        elif evt == self.lcd.evt.PA_ADJUST:
+            current_pa = self.printer.get_pressure_advance()
+            new_pa = max(0, current_pa + data)  # data is adjustment amount
+            self.printer.set_pressure_advance(new_pa)
+            print(f"Pressure Advance adjusted to: {new_pa:.4f}")
+        elif evt == self.lcd.evt.PA_RESET:
+            # Reset to default from config (would need to store default)
+            default_pa = 0.0  # Could be from config
+            self.printer.set_pressure_advance(default_pa)
+            print(f"Pressure Advance reset to: {default_pa:.4f}")
+        elif evt == self.lcd.evt.VIEW_SYSTEM_STATUS:
+            state_info = self.printer.get_klipper_state()
+            mcu_stats = self.printer.get_mcu_stats()
+
+            status_text, color = format_klipper_state(state_info)
+            stats_text = format_system_stats(mcu_stats)
+
+            output = f"System Status:\n{status_text}\n\n{stats_text}"
+            print(output)
+            self.lcd.write_console(output)
+        elif evt == self.lcd.evt.TOGGLE_INPUT_SHAPER:
+            enabled = bool(data)  # data should be 1 for enable, 0 for disable
+            self.printer.toggle_input_shaper(enabled)
+            print(f"Input Shaper {'enabled' if enabled else 'disabled'}")
         else:
             print("lcd_callback event not recognised %d" % evt)
 
