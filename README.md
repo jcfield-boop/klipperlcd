@@ -93,10 +93,6 @@ A more detailed guide on LCD screen firmware update can be found on the [Elegoo 
     
     The KLIPPER_ARGS should include `-a /home/pi/printer_data/comms/klippy.sock`. If not add it to the klipper.env file!
 
-### Install dependencies
-    sudo apt-get install python3-pip git
-    pip install pyserial
-
 ### Get the code
     git clone https://github.com/joakimtoe/KlipperLCD
     cd KlipperLCD
@@ -108,6 +104,7 @@ The easiest way to install and configure KlipperLCD is using the automated insta
     ./install.sh
 
 The installation script will:
+* Automatically check for and install required Python dependencies (python3-serial, python3-requests, python3-pil)
 * Automatically detect your username and home directory
 * Generate a configuration file at `~/printer_data/config/KlipperLCD.cfg`
 * Install the systemd service with correct paths
