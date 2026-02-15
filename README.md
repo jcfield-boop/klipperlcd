@@ -3,6 +3,8 @@ Want to run Klipper on your Neptune 3 Pro? And still want to be able to use your
 
 Take a look at this python service for the Elegoo Neptune 3 Pro LCD! Running together with Klipper3d and Moonraker!
 
+This fork creates a separate KlipperLCD.cfg file that abstracts your user and serial method to make it more maintainable.
+
 ## Look and feel
 <p float="left">
     <img src="img/boot_screen.PNG" height="400">
