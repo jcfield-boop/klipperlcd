@@ -53,7 +53,9 @@ Quite simple, just remember to cross RX and TX on the LCD and the USB/UART HW.
 </p>
 
 ## Update the LCD screen firmware
-1. Copy the LCD screen firmware `LCD/20240125.tft` to the root of a FAT32 formatted micro-SD card.
+1. Copy the LCD screen firmware `LCD/20240129.tft` to the root of a FAT32 formatted micro-SD card.
+
+   > **⚠️ Verify file size:** The `.tft` file should be approximately **6.6 MB** after downloading. If it is only a few KB, it was downloaded incorrectly (GitHub served an HTML page instead of the binary). In that case, download it using the raw URL: `https://raw.githubusercontent.com/jcfield-boop/klipperlcd/main/LCD/20240129.tft`
 2. Make sure the LCD screen is powered off.
 3. Insert the micro-SD card into the LCD screens SD card holder. Back-cover needs to be removed.
 4. Power on the LCD screen and wait for screen to say `Update Successed!`
