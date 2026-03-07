@@ -4,7 +4,8 @@ import time
 import base64
 
 # Force line-buffered stdout so journald timestamps are accurate
-sys.stdout.reconfigure(line_buffering=True)
+import io
+sys.stdout = io.TextIOWrapper(sys.stdout.buffer, line_buffering=True)
 from threading import Thread
 from datetime import timedelta
 
