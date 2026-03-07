@@ -218,30 +218,24 @@ class LCD:
     
     def start(self, *args, **kwargs):
         self.running = True
-        print("[LCD] Opening serial port: %s at %d baud" % (self.ser.port, self.ser.baudrate))
         try:
             self.ser.open()
-            print("[LCD] Serial port opened successfully")
         except Exception as e:
-            print("[LCD] ERROR opening serial port: %s" % e)
+            print("ERROR opening serial port %s: %s" % (self.ser.port, e))
             return
         Thread(target=self.run).start()
 
-        print("[LCD] Sending boot init sequence...")
         self.write("page boot")
         self.write("boot.j0.val=1")
         self.write("boot.t0.txt=\"KlipperLCD.service starting...\"")
-        print("[LCD] Boot init sequence sent")
     
     def boot_progress(self, progress):
         self.write("boot.t0.txt=\"Waiting for Klipper...\"")
         self.write("boot.j0.val=%d" % progress)
 
     def about_machine(self, size, fw):
-        print("Machine size: " + self.printer.MACHINE_SIZE)
-        print("Klipper version: " + self.printer.SHORT_BUILD_VERSION)
         self.write("information.size.txt=\"%s\"" % size)
-        self.write("information.sversion.txt=\"%s\"" % fw)        
+        self.write("information.sversion.txt=\"%s\"" % fw)
 
     def write(self, data, eol=True, lf=False):
         dat = bytearray()
@@ -255,7 +249,6 @@ class LCD:
             dat.extend(dat[-1:])
             dat[len(dat)-2] = 10 #'\r'
             dat[len(dat)-3] = 13 #'\n'
-        print("[LCD TX] %d bytes: %s" % (len(dat) + (3 if eol else 0), (dat + (bytearray([0xFF, 0xFF, 0xFF]) if eol else bytearray())).hex()))
         self.ser.write(dat)
         if eol:
             self.ser.write(bytearray([0xFF, 0xFF, 0xFF]))
@@ -454,13 +447,8 @@ class LCD:
         self.write("leveling.tm0.en=0")
 
     def run(self):
-        print("[LCD] Serial receive thread started")
-        byte_count = 0
         while self.running:
                 incomingByte = self.ser.read(1)
-                byte_count += 1
-                if byte_count <= 20 or byte_count % 100 == 0:
-                    print("[LCD] Received byte #%d: 0x%02x" % (byte_count, incomingByte[0]))
                 #
                 if self.rx_state == RX_STATE_IDLE:
                     if incomingByte[0] == FHONE:
