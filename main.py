@@ -39,23 +39,35 @@ class KlipperLCD ():
         self.thumbnail_inprogress = False
 
         progress_bar = 1
+        print("[__init__] Starting update_variable loop...")
         while self.printer.update_variable() == False:
+            print("[__init__] update_variable returned False, retrying (progress_bar=%d)..." % progress_bar)
             progress_bar += 5
             self.lcd.boot_progress(progress_bar)
             time.sleep(1)
+        print("[__init__] update_variable returned non-False, exiting boot loop")
 
+        print("[__init__] Calling init_Webservices()...")
         self.printer.init_Webservices()
+        print("[__init__] init_Webservices() returned")
+
+        print("[__init__] Fetching gcode store...")
         gcode_store = self.printer.get_gcode_store()
+        print("[__init__] get_gcode_store returned: %s" % ("ok, %d entries" % len(gcode_store) if gcode_store else "None/empty"))
         self.lcd.write_gcode_store(gcode_store)
 
+        print("[__init__] Fetching macros...")
         macros = self.printer.get_macros()
+        print("[__init__] get_macros returned %d macros: %s" % (len(macros), macros))
         self.lcd.write_macros(macros)
 
         print(self.printer.MACHINE_SIZE)
         print(self.printer.SHORT_BUILD_VERSION)
         self.lcd.write("information.size.txt=\"%s\"" % self.printer.MACHINE_SIZE)
         self.lcd.write("information.sversion.txt=\"%s\"" % self.printer.SHORT_BUILD_VERSION)
+        print("[__init__] Writing 'page main' to LCD...")
         self.lcd.write("page main")
+        print("[__init__] 'page main' written. Startup complete.")
 
     def start(self):
         print("KlipperLCD start")
