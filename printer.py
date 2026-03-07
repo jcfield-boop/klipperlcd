@@ -508,7 +508,7 @@ class PrinterData:
 			print("[update_variable] KlippySocket not connected, restarting...")
 			self.ks.klippyExit()
 			self.klippy_start()
-			return False
+			return None
 		query = '/printer/objects/query?extruder&heater_bed&gcode_move&fan&print_stats&motion_report&toolhead'
 		try:
 			print("[update_variable] Calling getREST for printer objects...")
@@ -517,7 +517,7 @@ class PrinterData:
 		except Exception as e:
 			print("Exception 431: %s" % e)
 			import traceback; traceback.print_exc()
-			return False
+			return None
 
 		#print("update_variable:")
 		#print(json.dumps(data, indent=2))
@@ -576,7 +576,7 @@ class PrinterData:
 		except Exception as e:
 			print("Exception 470: %s" % e)
 			import traceback; traceback.print_exc()
-			return False
+			return None
 
 		if self.job_Info:
 			self.file_name = self.job_Info['print_stats']['filename']

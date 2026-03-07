@@ -40,12 +40,12 @@ class KlipperLCD ():
 
         progress_bar = 1
         print("[__init__] Starting update_variable loop...")
-        while self.printer.update_variable() == False:
-            print("[__init__] update_variable returned False, retrying (progress_bar=%d)..." % progress_bar)
+        while self.printer.update_variable() is None:
+            print("[__init__] update_variable returned None (not ready), retrying (progress_bar=%d)..." % progress_bar)
             progress_bar += 5
             self.lcd.boot_progress(progress_bar)
             time.sleep(1)
-        print("[__init__] update_variable returned non-False, exiting boot loop")
+        print("[__init__] update_variable succeeded, exiting boot loop")
 
         print("[__init__] Calling init_Webservices()...")
         self.printer.init_Webservices()
