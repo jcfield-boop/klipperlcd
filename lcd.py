@@ -543,7 +543,7 @@ class LCD:
                 i = 0
                 for file in files:
                     print(file)
-                    page_num = ((i / 5) + 1)
+                    page_num = (i // 5) + 1
                     self.write("file%d.t%d.txt=\"%s\"" % (page_num, i, file))
                     i += 1
                 self.write("page file1")
@@ -893,7 +893,7 @@ class LCD:
             if self.probe_mode:
                 z_pos = self.printer.z_pos + unit
                 print("Probe: z_pos %d" % z_pos)
-                self.write("leveldata.z_offset.val=%d" % (int)(pos * 100))
+                self.write("leveldata.z_offset.val=%d" % (int)(z_pos * 100))
                 #self.write("adjustzoffset.z_offset.val=%d" % (int)(self.printer.z_pos * 100))
                 self.callback(self.evt.PROBE, unit)
             else:
@@ -1051,7 +1051,7 @@ class LCD:
     
     def _PrintFile(self, data):
         if data[0] == 0x01:
-            self.write("file%d.t%d.pco=65504" % ((self.selected_file / 5) + 1, self.selected_file))
+            self.write("file%d.t%d.pco=65504" % ((self.selected_file // 5) + 1, self.selected_file))
             #self.write("leveldata.z_offset.val=%d" % 0)
             self.write("printpause.printvalue.txt=\"0\"")
             self.write("printpause.printprocess.val=0")

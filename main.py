@@ -230,18 +230,13 @@ class KlipperLCD ():
 
             # Reading file
             print(file)
-            f = open(file, "r")
-            if not f:
+            try:
+                f = open(file, "r")
+                buf = f.readlines()
                 f.close()
-                print("File could not be opened: %s" % file)
+            except Exception as e:
+                print("File could not be read: %s — %s" % (file, e))
                 return
-            buf = f.readlines()
-            if not f:
-                f.close()
-                print("File could not be read")
-                return
-
-            f.close()
             thumbnail_found = False
             b64 = ""
 
