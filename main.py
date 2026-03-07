@@ -72,6 +72,7 @@ class KlipperLCD ():
         print("[__init__] Waiting 2s for LCD to clear write queue before page switch...")
         time.sleep(2)
         print("[__init__] Writing 'page main' to LCD...")
+        self.lcd.write("main.va0.val=1")
         self.lcd.write("page main")
         time.sleep(0.5)
         self.lcd.write("page main")
