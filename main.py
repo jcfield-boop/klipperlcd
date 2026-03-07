@@ -2,6 +2,9 @@ import argparse
 import sys
 import time
 import base64
+
+# Force line-buffered stdout so journald timestamps are accurate
+sys.stdout.reconfigure(line_buffering=True)
 from threading import Thread
 from datetime import timedelta
 
