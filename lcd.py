@@ -227,15 +227,11 @@ class LCD:
             return
         Thread(target=self.run).start()
 
-        #self.write(b'page boot')
         print("[LCD] Sending boot init sequence...")
         self.write("page boot")
-        self.write(b'com_star')
-        self.write(b'main.va0.val=1')
         self.write("boot.j0.val=1")
         self.write("boot.t0.txt=\"KlipperLCD.service starting...\"")
         print("[LCD] Boot init sequence sent")
-        #self.write("page main")
     
     def boot_progress(self, progress):
         self.write("boot.t0.txt=\"Waiting for Klipper...\"")
@@ -259,6 +255,7 @@ class LCD:
             dat.extend(dat[-1:])
             dat[len(dat)-2] = 10 #'\r'
             dat[len(dat)-3] = 13 #'\n'
+        print("[LCD TX] %d bytes: %s" % (len(dat) + (3 if eol else 0), (dat + (bytearray([0xFF, 0xFF, 0xFF]) if eol else bytearray())).hex()))
         self.ser.write(dat)
         if eol:
             self.ser.write(bytearray([0xFF, 0xFF, 0xFF]))
