@@ -16,6 +16,111 @@ from visualization import (format_bed_mesh_grid, format_klipper_state,
                            format_pressure_advance_info, format_input_shaper_info,
                            format_file_metadata, format_system_stats)
 
+def probe_lcd(port, baud=None):
+    import serial
+
+    BAUDS = [9600, 57600, 115200, 250000]
+    TERM = b'\xff\xff\xff'
+
+    def _open(b):
+        return serial.Serial(port, b, timeout=0.5)
+
+    print("\n=== KlipperLCD Hardware Probe ===")
+    print("Port: %s" % port)
+
+    # Step A — Port open test
+    probe_baud = baud if baud else 115200
+    print("\n[A] Port open test @ %d baud..." % probe_baud)
+    ser = None
+    try:
+        ser = _open(probe_baud)
+        print("[A] PASS — port opened successfully")
+    except Exception as e:
+        print("[A] FAIL — %s" % e)
+        ser = None
+
+    # Step B — Baud auto-detect (always run to confirm, or recover from Step A fail)
+    confirmed_baud = probe_baud if ser else None
+    print("\n[B] Baud auto-detect (sending 'get' query at each baud)...")
+    if ser:
+        ser.close()
+        ser = None
+    detected = False
+    for b in BAUDS:
+        try:
+            s = _open(b)
+            s.write(b'get' + TERM)
+            time.sleep(0.5)
+            waiting = s.in_waiting
+            s.close()
+            if waiting > 0:
+                print("[B] PASS — got %d RX bytes at %d baud — using this baud" % (waiting, b))
+                confirmed_baud = b
+                detected = True
+                break
+            else:
+                print("[B]   %d baud: no RX" % b)
+        except Exception as e:
+            print("[B]   %d baud: error — %s" % (b, e))
+    if not detected:
+        print("[B] Auto-detect inconclusive (LCD may not respond until triggered)")
+        if confirmed_baud is None:
+            confirmed_baud = probe_baud
+
+    # Step C — TX test
+    print("\n[C] TX test @ %d baud..." % confirmed_baud)
+    try:
+        ser = _open(confirmed_baud)
+        cmd = b'boot.t0.txt="PROBE OK"' + TERM
+        ser.write(cmd)
+        print("[C] Sent: %r" % cmd)
+        print("[C] Watch LCD: did boot screen text change to 'PROBE OK'?")
+    except Exception as e:
+        print("[C] FAIL — %s" % e)
+
+    # Step D — RX listen (2s window)
+    print("\n[D] Listening for RX bytes for 2 seconds...")
+    time.sleep(2)
+    rx_bytes = b''
+    if ser and ser.is_open:
+        waiting = ser.in_waiting
+        if waiting > 0:
+            rx_bytes = ser.read(waiting)
+    if rx_bytes:
+        print("[D] RX bytes received: %s" % rx_bytes.hex())
+    else:
+        print("[D] No bytes received (expected for this display in passive state)")
+
+    # Step E — Page switch probe
+    print("\n[E] Page switch probe — observe LCD after each command (2s pause):")
+    page_cmds = [
+        (b'page 0' + TERM,    "page 0    (index 0)"),
+        (b'page 1' + TERM,    "page 1    (index 1)"),
+        (b'page main' + TERM, "page main (by name)"),
+        (b'page 2' + TERM,    "page 2    (index 2)"),
+    ]
+    if ser and ser.is_open:
+        for cmd_bytes, label in page_cmds:
+            ser.write(cmd_bytes)
+            print("[E] Sent %-26s — did page switch?" % label)
+            time.sleep(2)
+    else:
+        print("[E] SKIP — serial port not open")
+    print("[E] If any page switched, note which index/name and update lcd.start() accordingly.")
+
+    if ser and ser.is_open:
+        ser.close()
+
+    # Step F — Summary
+    print("\n[F] Summary")
+    print("  Port:           %s" % port)
+    print("  Baud used:      %d" % confirmed_baud)
+    print("  Baud detected:  %s" % ("yes (%d)" % confirmed_baud if detected else "no (inconclusive)"))
+    print("  RX bytes:       %s" % (rx_bytes.hex() if rx_bytes else "none"))
+    print("  TX commands:    boot.t0.txt update + page 0/1/main/2")
+    print("\n=== Probe complete ===\n")
+
+
 class KlipperLCD ():
     def __init__(self, config=None):
         # Load configuration
@@ -402,6 +507,8 @@ if __name__ == "__main__":
     parser.add_argument('--config', '-c', type=str, help='Path to KlipperLCD.cfg configuration file')
     parser.add_argument('--generate-config', type=str, metavar='PATH',
                        help='Generate a sample configuration file at the specified path')
+    parser.add_argument('--probe-lcd', action='store_true',
+                       help='Run LCD hardware diagnostic and exit (no Klipper required)')
     args = parser.parse_args()
 
     # Generate config if requested
@@ -410,6 +517,12 @@ if __name__ == "__main__":
         config.generate_sample_config(args.generate_config)
         print(f"Sample configuration generated at: {args.generate_config}")
         print("Edit this file to customize your settings, then restart KlipperLCD service")
+        sys.exit(0)
+
+    # Run LCD probe if requested
+    if args.probe_lcd:
+        config = KlipperLCDConfig(args.config)
+        probe_lcd(config.connection.serial_port, config.connection.baud_rate)
         sys.exit(0)
 
     # Load configuration
