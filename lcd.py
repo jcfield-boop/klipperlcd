@@ -226,10 +226,10 @@ class LCD:
                 break
             except Exception as e:
                 print("Waiting for serial port %s: %s (retrying in 5s...)" % (self.ser.port, e))
-                time.sleep(5)
+                sleep(5)
 
         Thread(target=self.run).start()
-        time.sleep(1)  # allow CP2102 UART to settle after open
+        sleep(1)  # allow CP2102 UART to settle after open
 
         print("Boot: sending page boot")
         self.write("page boot")
