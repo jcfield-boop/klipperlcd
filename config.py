@@ -74,10 +74,12 @@ class PathsConfig:
         if config_parser and config_parser.has_section('paths'):
             install_dir = config_parser.get('paths', 'install_dir', fallback='~/KlipperLCD')
             self.install_dir = os.path.expanduser(install_dir)
-            self.log_file = config_parser.get('paths', 'log_file', fallback='/tmp/KlipperLCD.log')
+            log_file = config_parser.get('paths', 'log_file',
+                                         fallback='~/printer_data/logs/KlipperLCD.log')
+            self.log_file = os.path.expanduser(log_file)
         else:
             self.install_dir = os.path.expanduser('~/KlipperLCD')
-            self.log_file = '/tmp/KlipperLCD.log'
+            self.log_file = os.path.expanduser('~/printer_data/logs/KlipperLCD.log')
 
 
 class PresetsConfig:

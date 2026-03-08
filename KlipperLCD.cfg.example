@@ -59,9 +59,10 @@ klippy_socket = ~/printer_data/comms/klippy.sock
 install_dir = ~/KlipperLCD
 
 # Log file location
-# Default: /tmp/KlipperLCD.log
-# This file contains KlipperLCD service logs for debugging
-log_file = /tmp/KlipperLCD.log
+# Default: ~/printer_data/logs/KlipperLCD.log
+# Stored alongside other Klipper logs so it appears in Mainsail's log viewer.
+# Rotates at 5 MB, keeps 3 backups (~20 MB max).
+log_file = ~/printer_data/logs/KlipperLCD.log
 
 # ==============================================================================
 # Material Temperature Presets

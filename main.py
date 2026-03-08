@@ -2,10 +2,52 @@ import argparse
 import sys
 import time
 import base64
+import os
 
 # Force line-buffered stdout so journald timestamps are accurate
 import io
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, line_buffering=True)
+
+
+class _Tee:
+    """Mirror all print() output to both stdout and a rotating log file.
+
+    Lines are timestamped in the log file.  The file rotates at 5 MB and
+    keeps 3 backups, so at most ~20 MB of history is retained.
+    """
+    def __init__(self, stream, log_path):
+        from logging.handlers import RotatingFileHandler
+        import logging
+        os.makedirs(os.path.dirname(os.path.abspath(log_path)), exist_ok=True)
+        self._stream = stream
+        self._buf = []
+        handler = RotatingFileHandler(log_path, maxBytes=5 * 1024 * 1024, backupCount=3)
+        handler.setFormatter(logging.Formatter('%(asctime)s %(message)s',
+                                               datefmt='%Y-%m-%d %H:%M:%S'))
+        self._log = logging.getLogger('klipperlcd.tee')
+        self._log.addHandler(handler)
+        self._log.setLevel(logging.DEBUG)
+        self._log.propagate = False
+        print("Logging to %s" % log_path, file=stream)
+
+    def write(self, data):
+        self._stream.write(data)
+        self._buf.append(data)
+        if '\n' in data:
+            line = ''.join(self._buf).rstrip('\n')
+            if line:
+                self._log.info(line)
+            self._buf = []
+
+    def flush(self):
+        self._stream.flush()
+
+    def fileno(self):
+        return self._stream.fileno()
+
+
+def setup_file_logging(log_path):
+    sys.stdout = _Tee(sys.stdout, log_path)
 from threading import Thread
 from datetime import timedelta
 
@@ -541,6 +583,9 @@ if __name__ == "__main__":
 
     # Load configuration
     config = KlipperLCDConfig(args.config)
+
+    # Mirror all print() output to the configured log file
+    setup_file_logging(config.paths.log_file)
 
     # Start KlipperLCD
     x = KlipperLCD(config)
