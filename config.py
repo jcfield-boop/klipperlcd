@@ -248,6 +248,30 @@ class KlipperLCDConfig:
         self.filament = FilamentConfig(config_parser)
         self.features = FeaturesConfig(config_parser)
 
+        # Migrate stale config values written by older versions
+        self._migrate(config_parser)
+
+    def _migrate(self, config_parser):
+        """Patch stale values from older versions directly in the config file."""
+        if not self.config_path or not os.path.exists(self.config_path):
+            return
+        migrations = {
+            ('paths', 'log_file', '/tmp/KlipperLCD.log'):
+                '~/printer_data/logs/KlipperLCD.log',
+        }
+        changed = False
+        for (section, key, old_val), new_val in migrations.items():
+            if (config_parser and config_parser.has_option(section, key)
+                    and config_parser.get(section, key).strip() == old_val):
+                config_parser.set(section, key, new_val)
+                self.paths.log_file = os.path.expanduser(new_val)
+                logger.info("Migrated [%s] %s: %s -> %s", section, key, old_val, new_val)
+                changed = True
+        if changed:
+            with open(self.config_path, 'w') as f:
+                config_parser.write(f)
+            logger.info("Config file updated: %s", self.config_path)
+
     def _find_config_file(self):
         """Search for config file in default locations"""
         # Priority order:
