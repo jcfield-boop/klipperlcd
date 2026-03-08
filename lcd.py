@@ -226,9 +226,10 @@ class LCD:
         Thread(target=self.run).start()
 
         self.write("page boot")
+        self.write(b'com_star')
         self.write("boot.j0.val=1")
         self.write("boot.t0.txt=\"KlipperLCD.service starting...\"")
-    
+
     def boot_progress(self, progress):
         self.write("boot.t0.txt=\"Waiting for Klipper...\"")
         self.write("boot.j0.val=%d" % progress)
