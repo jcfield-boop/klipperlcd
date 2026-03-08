@@ -448,7 +448,12 @@ class LCD:
 
     def run(self):
         while self.running:
-                incomingByte = self.ser.read(1)
+                try:
+                    incomingByte = self.ser.read(1)
+                except Exception:
+                    continue
+                if not incomingByte:
+                    continue
                 #
                 if self.rx_state == RX_STATE_IDLE:
                     if incomingByte[0] == FHONE:
