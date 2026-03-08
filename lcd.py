@@ -229,11 +229,17 @@ class LCD:
                 time.sleep(5)
 
         Thread(target=self.run).start()
+        time.sleep(1)  # allow CP2102 UART to settle after open
 
+        print("Boot: sending page boot")
         self.write("page boot")
+        print("Boot: sending com_star")
         self.write(b'com_star')
+        print("Boot: sending boot.j0.val=1")
         self.write("boot.j0.val=1")
+        print("Boot: sending boot.t0.txt")
         self.write("boot.t0.txt=\"KlipperLCD.service starting...\"")
+        print("Boot: sequence complete")
 
     def boot_progress(self, progress):
         self.write("boot.t0.txt=\"Waiting for Klipper...\"")
