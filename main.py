@@ -121,14 +121,43 @@ def probe_lcd(port, baud=None):
     print("\n=== Probe complete ===\n")
 
 
+def find_port(configured_port):
+    """Return configured_port if it exists, else scan /dev/serial/by-id/ for USB serial devices."""
+    import glob, os
+    if os.path.exists(configured_port):
+        return configured_port
+    # Prefer /dev/serial/by-id/ — stable paths with descriptive device names
+    by_id = sorted(glob.glob('/dev/serial/by-id/usb-*'))
+    if by_id:
+        if len(by_id) == 1:
+            print("Configured port %s not found; using %s" % (configured_port, by_id[0]))
+        else:
+            print("Configured port %s not found. Multiple USB serial devices found:" % configured_port)
+            for p in by_id:
+                print("  %s" % p)
+            print("Using %s — set serial_port in config to choose a specific device" % by_id[0])
+        return by_id[0]
+    # ttyAMA* is the RPi Linux console UART — do not auto-detect it
+    usb = sorted(glob.glob('/dev/ttyUSB*'))
+    if usb:
+        if len(usb) > 1:
+            print("Configured port %s not found. Multiple ttyUSB devices: %s" % (configured_port, usb))
+            print("Using %s — set serial_port in config to choose a specific device" % usb[0])
+        else:
+            print("Configured port %s not found; using %s" % (configured_port, usb[0]))
+        return usb[0]
+    return configured_port  # return original; start() will retry until it appears
+
+
 class KlipperLCD ():
     def __init__(self, config=None):
         # Load configuration
         self.config = config if config else KlipperLCDConfig()
 
         # Initialize LCD with config
+        actual_port = find_port(self.config.connection.serial_port)
         self.lcd = LCD(
-            self.config.connection.serial_port,
+            actual_port,
             baud=self.config.connection.baud_rate,
             callback=self.lcd_callback,
             config=self.config
@@ -141,7 +170,8 @@ class KlipperLCD ():
             host=self.config.klipper.moonraker_host,
             port=self.config.klipper.moonraker_port,
             klippy_sock=self.config.klipper.klippy_socket,
-            callback=self.printer_callback
+            callback=self.printer_callback,
+            led_name=self.config.features.led_name
         )
         self.running = False
         self.wait_probe = False
@@ -334,8 +364,11 @@ class KlipperLCD ():
             #print("SET_VELOCITY_LIMIT ACCEL=%d" % data)
             self.printer.sendGCode("SET_VELOCITY_LIMIT ACCEL=%d" % data)
         elif evt == self.lcd.evt.ACCEL_TO_DECEL:
-            #print("SET_VELOCITY_LIMIT ACCEL_TO_DECEL=%d" % data)
-            self.printer.sendGCode("SET_VELOCITY_LIMIT ACCEL_TO_DECEL=%d" % data)
+            if getattr(self.printer, 'minimum_cruise_ratio', None) is not None:
+                ratio = max(0.0, min(1.0, data / max(self.printer.max_accel, 1)))
+                self.printer.sendGCode("SET_VELOCITY_LIMIT MINIMUM_CRUISE_RATIO=%.4f" % ratio)
+            else:
+                self.printer.sendGCode("SET_VELOCITY_LIMIT ACCEL_TO_DECEL=%d" % data)
         elif evt == self.lcd.evt.VELOCITY:
             #print("SET_VELOCITY_LIMIT VELOCITY=%d" % data)
             self.printer.sendGCode("SET_VELOCITY_LIMIT VELOCITY=%d" % data)

@@ -113,8 +113,9 @@ class KlippySocket:
 			try:
 				self.webhook_socket.connect(uds_filename)
 			except socket.error as e:
-				if e.errno == errno.ECONNREFUSED:
-					time.sleep(0.1)
+				if e.errno in (errno.ECONNREFUSED, errno.ENOENT):
+					# Socket not ready yet (Klipper still starting) — retry
+					time.sleep(0.5)
 					continue
 				print(
 					"Unable to connect socket %s [%d,%s]\n" % (
@@ -230,7 +231,7 @@ class PrinterData:
 	SHORT_BUILD_VERSION = "1.00"
 	CORP_WEBSITE_E = "https://www.klipper3d.org/"
 
-	def __init__(self, API_Key, host='127.0.0.1', port=80, klippy_sock='/home/pi/printer_data/comms/klippy.sock', callback=None, URL=None):
+	def __init__(self, API_Key, host='127.0.0.1', port=80, klippy_sock='/home/pi/printer_data/comms/klippy.sock', callback=None, URL=None, led_name='top_LEDs'):
 		# Support legacy URL parameter for backward compatibility
 		if URL is not None:
 			host = URL
@@ -260,7 +261,9 @@ class PrinterData:
 		self.max_velocity           = None
 		self.max_accel              = None
 		self.max_accel_to_decel     = None
+		self.minimum_cruise_ratio   = None
 		self.square_corner_velocity = None
+		self.led_name               = led_name
 		
 		self.op = MoonrakerSocket(host, port, API_Key)
 		print(self.op.base_address)
@@ -279,7 +282,13 @@ class PrinterData:
 			"params": {
 				"objects": {
 					"toolhead": [
-						"position"
+						"position",
+						"homed_axes",
+						"max_velocity",
+						"max_accel",
+						"max_accel_to_decel",
+						"minimum_cruise_ratio",
+						"square_corner_velocity"
 					]
 				},
 				"response_template": {}
@@ -349,7 +358,10 @@ class PrinterData:
 				if 'max_accel' in status['toolhead']:
 					if self.max_accel != status['toolhead']['max_accel']:
 						self.max_accel = status['toolhead']['max_accel']
-				if 'max_accel_to_decel' in status['toolhead']:
+				if 'minimum_cruise_ratio' in status['toolhead']:
+					self.max_accel_to_decel = None
+					self.minimum_cruise_ratio = status['toolhead']['minimum_cruise_ratio']
+				elif 'max_accel_to_decel' in status['toolhead']:
 					if self.max_accel_to_decel != status['toolhead']['max_accel_to_decel']:
 						self.max_accel_to_decel = status['toolhead']['max_accel_to_decel']
 				if 'square_corner_velocity' in status['toolhead']:
@@ -644,9 +656,9 @@ class PrinterData:
 	def set_led(self, led):
 		self.led_percentage = led
 		if(led > 0):
-			self.sendGCode('SET_LED LED=top_LEDs WHITE=0.5 SYNC=0 TRANSMIT=1')
+			self.sendGCode('SET_LED LED=%s WHITE=0.5 SYNC=0 TRANSMIT=1' % self.led_name)
 		else:
-			self.sendGCode('SET_LED LED=top_LEDs WHITE=0 SYNC=0 TRANSMIT=1')
+			self.sendGCode('SET_LED LED=%s WHITE=0 SYNC=0 TRANSMIT=1' % self.led_name)
 
 	def set_fan(self, fan):
 		self.fan_percentage = fan

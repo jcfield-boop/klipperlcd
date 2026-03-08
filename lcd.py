@@ -211,6 +211,7 @@ class LCD:
         self.askprint = False
         # Make sure the serial port closes when you quit the program.
         atexit.register(self._atexit)
+        self._warned_addrs = set()
 
     def _atexit(self):
         self.ser.close()
@@ -218,11 +219,15 @@ class LCD:
     
     def start(self, *args, **kwargs):
         self.running = True
-        try:
-            self.ser.open()
-        except Exception as e:
-            print("ERROR opening serial port %s: %s" % (self.ser.port, e))
-            return
+        while True:
+            try:
+                self.ser.open()
+                print("Serial port %s opened successfully" % self.ser.port)
+                break
+            except Exception as e:
+                print("Waiting for serial port %s: %s (retrying in 5s...)" % (self.ser.port, e))
+                time.sleep(5)
+
         Thread(target=self.run).start()
 
         self.write("page boot")
@@ -239,6 +244,8 @@ class LCD:
         self.write("information.sversion.txt=\"%s\"" % fw)
 
     def write(self, data, eol=True, lf=False):
+        if not self.ser.is_open:
+            return
         dat = bytearray()
         if type(data) == str:
             dat.extend(map(ord, data))
@@ -455,45 +462,51 @@ class LCD:
                     continue
                 if not incomingByte:
                     continue
-                #
-                if self.rx_state == RX_STATE_IDLE:
-                    if incomingByte[0] == FHONE:
-                        self.rx_buf.extend(incomingByte)
-                    elif incomingByte[0] == FHTWO:
-                        if self.rx_buf[0] == FHONE:
+                try:
+                    #
+                    if self.rx_state == RX_STATE_IDLE:
+                        if incomingByte[0] == FHONE:
                             self.rx_buf.extend(incomingByte)
-                            self.rx_state = RX_STATE_READ_LEN
+                        elif incomingByte[0] == FHTWO:
+                            if self.rx_buf[0] == FHONE:
+                                self.rx_buf.extend(incomingByte)
+                                self.rx_state = RX_STATE_READ_LEN
+                            else:
+                                self.rx_buf.clear()
+                                print("Unexpected header received: 0x%02x ()" % incomingByte[0])
                         else:
                             self.rx_buf.clear()
-                            print("Unexpected header received: 0x%02x ()" % incomingByte[0])         
-                    else:
-                        self.rx_buf.clear()
-                        self.error_from_lcd = True
-                        print("Unexpected data received: 0x%02x" % incomingByte[0])
-                #
-                elif self.rx_state == RX_STATE_READ_LEN:
-                    # Check if len is as expected, seems to alway be 6 bytes?
-                    #if incomingByte[0] == FHLEN:
-                    self.rx_buf.extend(incomingByte) # Read length
-                    self.rx_state = RX_STATE_READ_DAT
-                    #else:
-                    #    self.rx_buf.clear()
-                    #    self.rx_state = RX_STATE_IDLE
-                    #    print("Unexpected len param received: 0x%02x" % incomingByte[0])
-                #
-                elif self.rx_state == RX_STATE_READ_DAT:
-                    self.rx_buf.extend(incomingByte)
-                    self.rx_data_cnt += 1
-                    len = self.rx_buf[2]
-                    if self.rx_data_cnt >= len:
-                        # New command/message received from display
-                        cmd = self.rx_buf[3]
-                        data = self.rx_buf[-(len-1):] # Remove header and command
-                        # Handle incoming data
-                        self._handle_command(cmd, data)
-                        self.rx_buf.clear()
-                        self.rx_data_cnt = 0
-                        self.rx_state = RX_STATE_IDLE
+                            self.error_from_lcd = True
+                            print("Unexpected data received: 0x%02x" % incomingByte[0])
+                    #
+                    elif self.rx_state == RX_STATE_READ_LEN:
+                        # Check if len is as expected, seems to alway be 6 bytes?
+                        #if incomingByte[0] == FHLEN:
+                        self.rx_buf.extend(incomingByte) # Read length
+                        self.rx_state = RX_STATE_READ_DAT
+                        #else:
+                        #    self.rx_buf.clear()
+                        #    self.rx_state = RX_STATE_IDLE
+                        #    print("Unexpected len param received: 0x%02x" % incomingByte[0])
+                    #
+                    elif self.rx_state == RX_STATE_READ_DAT:
+                        self.rx_buf.extend(incomingByte)
+                        self.rx_data_cnt += 1
+                        len = self.rx_buf[2]
+                        if self.rx_data_cnt >= len:
+                            # New command/message received from display
+                            cmd = self.rx_buf[3]
+                            data = self.rx_buf[-(len-1):] # Remove header and command
+                            # Handle incoming data
+                            self._handle_command(cmd, data)
+                            self.rx_buf.clear()
+                            self.rx_data_cnt = 0
+                            self.rx_state = RX_STATE_IDLE
+                except Exception as e:
+                    print("run: parse error (resetting state): %s" % e)
+                    self.rx_buf.clear()
+                    self.rx_data_cnt = 0
+                    self.rx_state = RX_STATE_IDLE
 
     def _handle_command(self, cmd, dat):
         if cmd == CMD_WRITEVAR: #0x82
@@ -503,9 +516,9 @@ class LCD:
             addr = dat[0]
             addr = (addr << 8) | dat[1]
             bytelen = dat[2]
-            data = [32]
-            for i in range (0, bytelen, 2):
-                idx = int(i / 2)
+            data = [0] * max(1, bytelen // 2)
+            for i in range(0, bytelen, 2):
+                idx = i // 2
                 data[idx] = dat[3 + i]
                 data[idx] = (data[idx] << 8) | dat[4 + i]
             self._handle_readvar(addr, data)
@@ -527,7 +540,9 @@ class LCD:
                 print("%s: len: %d data[0]: %x" % (self.addr_func_map[addr].__name__, len(data), data[0]))
             self.addr_func_map[addr](data)
         else:
-            print("_handle_readvar: addr %x not recognised" % addr)
+            if addr not in self._warned_addrs:
+                self._warned_addrs.add(addr)
+                print("_handle_readvar: addr %x not recognised (suppressing further)" % addr)
 
     def _Console(self, data):
         if data[0] == 0x01: # Back
