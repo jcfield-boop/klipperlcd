@@ -1,4 +1,5 @@
 import binascii
+import logging
 from time import sleep
 from threading import Thread
 from array import array
@@ -8,6 +9,8 @@ import lib_col_pic
 
 import atexit
 import serial
+
+logger = logging.getLogger('KlipperLCD.lcd')
 
 FHONE = 0x5a
 FHTWO = 0xa5
@@ -223,23 +226,23 @@ class LCD:
         while True:
             try:
                 self.ser.open()
-                print("Serial port %s opened" % self.ser.port)
+                logger.info("Serial port %s opened" % self.ser.port)
                 break
             except Exception as e:
-                print("Waiting for serial port %s: %s (retrying in 5s...)" % (self.ser.port, e))
+                logger.warning("Waiting for serial port %s: %s (retrying in 5s...)" % (self.ser.port, e))
                 sleep(5)
 
         sleep(1)   # allow CP2102 adapter to initialize before sending commands
-        print("Sending boot sequence to LCD")
+        logger.info("Sending boot sequence to LCD")
 
         Thread(target=self.run).start()
 
-        self.write("page boot");        print("  -> page boot")
-        self.write(b'com_star');        print("  -> com_star")
-        self.write(b'main.va0.val=1');  print("  -> main.va0.val=1")
-        self.write("boot.j0.val=1");    print("  -> boot.j0.val=1")
+        self.write("page boot");        logger.info("  -> page boot")
+        self.write(b'com_star');        logger.info("  -> com_star")
+        self.write(b'main.va0.val=1');  logger.info("  -> main.va0.val=1")
+        self.write("boot.j0.val=1");    logger.info("  -> boot.j0.val=1")
         self.write("boot.t0.txt=\"KlipperLCD.service starting...\"")
-        print("Boot sequence sent")
+        logger.info("Boot sequence sent")
 
     def boot_progress(self, progress):
         self.write("boot.t0.txt=\"Waiting for Klipper...\"")
@@ -502,7 +505,7 @@ class LCD:
                         if self.rx_data_cnt >= len:
                             # New command/message received from display
                             if not self._lcd_responded:
-                                print("LCD responded: first packet received from display")
+                                logger.info("LCD responded: first packet received from display")
                                 self._lcd_responded = True
                             cmd = self.rx_buf[3]
                             data = self.rx_buf[-(len-1):] # Remove header and command

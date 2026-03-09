@@ -1,12 +1,9 @@
 import argparse
+import logging
 import sys
 import time
 import base64
 import os
-
-# Force line-buffered stdout so journald captures output immediately
-import io
-sys.stdout = io.TextIOWrapper(sys.stdout.buffer, line_buffering=True)
 
 from threading import Thread
 from datetime import timedelta
@@ -391,5 +388,12 @@ if __name__ == "__main__":
         sys.exit(0)
 
     config = KlipperLCDConfig(args.config)
+
+    # Set up file logging so all logger.info() calls go to KlipperLCD.log
+    log_handler = logging.FileHandler(config.paths.log_file)
+    log_handler.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
+    logging.getLogger().addHandler(log_handler)
+    logging.getLogger().setLevel(logging.INFO)
+
     x = KlipperLCD(config)
     x.start()
