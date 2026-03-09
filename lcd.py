@@ -235,6 +235,8 @@ class LCD:
         self.write("page boot")
         print("Boot: sending com_star")
         self.write(b'com_star')
+        print("Boot: sending main.va0.val=1")
+        self.write("main.va0.val=1")           # TJC handshake — display ignores commands until this is set
         print("Boot: sending boot.j0.val=1")
         self.write("boot.j0.val=1")
         print("Boot: sending boot.t0.txt")

@@ -1,5 +1,10 @@
 # KlipperLCD Changelog
 
+## [Unreleased]
+
+### Fixed
+- **TJC4B25C12785 display stuck on "Waiting for KlipperLCD.service..."**: Added `main.va0.val=1` handshake command to the boot sequence immediately after `com_star`. The TJC TFT firmware requires this flag to be set before it will accept page-switch or variable commands. Without it the display remained on the waiting screen despite all serial writes succeeding.
+
 ## [Unreleased] - Enhanced Features Edition
 
 ### Added - Phase 1: Enhanced Features (Backend)
