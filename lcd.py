@@ -193,6 +193,7 @@ class LCD:
         self.rx_data_cnt = 0
         self.rx_state = RX_STATE_IDLE
         self.error_from_lcd = False
+        self._lcd_responded = False
         # List of GCode files
         self.files = False
         self.selected_file = False
@@ -229,14 +230,16 @@ class LCD:
                 sleep(5)
 
         sleep(1)   # allow CP2102 adapter to initialize before sending commands
+        print("Sending boot sequence to LCD")
 
         Thread(target=self.run).start()
 
-        self.write("page boot")
-        self.write(b'com_star')
-        self.write(b'main.va0.val=1')
-        self.write("boot.j0.val=1")
+        self.write("page boot");        print("  -> page boot")
+        self.write(b'com_star');        print("  -> com_star")
+        self.write(b'main.va0.val=1');  print("  -> main.va0.val=1")
+        self.write("boot.j0.val=1");    print("  -> boot.j0.val=1")
         self.write("boot.t0.txt=\"KlipperLCD.service starting...\"")
+        print("Boot sequence sent")
 
     def boot_progress(self, progress):
         self.write("boot.t0.txt=\"Waiting for Klipper...\"")
@@ -498,6 +501,9 @@ class LCD:
                         len = self.rx_buf[2]
                         if self.rx_data_cnt >= len:
                             # New command/message received from display
+                            if not self._lcd_responded:
+                                print("LCD responded: first packet received from display")
+                                self._lcd_responded = True
                             cmd = self.rx_buf[3]
                             data = self.rx_buf[-(len-1):] # Remove header and command
                             # Handle incoming data
