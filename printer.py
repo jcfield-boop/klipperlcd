@@ -1,4 +1,3 @@
-from asyncio.tasks import sleep
 import threading
 import errno
 import select
@@ -266,7 +265,6 @@ class PrinterData:
 		self.led_name               = led_name
 		
 		self.op = MoonrakerSocket(host, port, API_Key)
-		print(self.op.base_address)
 
 		self.klippy_start()
 
@@ -391,12 +389,10 @@ class PrinterData:
 
 	def add_mm(self, axs, new_offset):
 		gc = 'TESTZ Z={}'.format(new_offset)
-		print(axs, gc)
 		self.sendGCode(gc)
 
 	def probe_adjust(self, change):
 		gc = 'TESTZ Z={}'.format(change)
-		print(gc)
 		self.sendGCode(gc)
 
 	def probe_calibrate(self):
@@ -409,20 +405,17 @@ class PrinterData:
 
 	def getREST(self, path):
 		url = self.op.base_address + path
-		print("[getREST] GET %s" % url)
 		try:
 			r = self.op.s.get(url, timeout=10)
-			print("[getREST] HTTP %d" % r.status_code)
 			d = r.content.decode('utf-8')
 			try:
 				result = json.loads(d)
-				print("[getREST] OK, keys=%s" % (list(result.keys()) if isinstance(result, dict) else type(result).__name__))
 				return result
 			except Exception as e:
-				print("[getREST] JSON parse failed: %s, body=%r" % (e, d[:200]))
+				print("getREST JSON parse failed: %s, body=%r" % (e, d[:200]))
 				return None
 		except Exception as e:
-			print("[getREST] Request failed: %s" % e)
+			print("getREST request failed: %s" % e)
 			return None
 
 	async def _postREST(self, path, json):
@@ -432,37 +425,25 @@ class PrinterData:
 		self.event_loop.call_soon_threadsafe(asyncio.create_task,self._postREST(path,json))
 
 	def init_Webservices(self):
-		print("[init_Webservices] Starting...")
 		try:
 			requests.get(self.op.base_address, timeout=10)
 		except ConnectionError:
-			print('[init_Webservices] Web site does not exist')
+			print('init_Webservices: Web site does not exist')
 			return
-		else:
-			print('[init_Webservices] Web site exists')
 
-		print("[init_Webservices] Checking /api/printer...")
 		api_result = self.getREST('/api/printer')
 		if api_result is None:
-			print("[init_Webservices] /api/printer returned None, aborting")
 			return
-		print("[init_Webservices] /api/printer OK, calling update_variable...")
 		self.update_variable()
 
-		print("[init_Webservices] Fetching Klipper version...")
 		try:
 			version_data = self.getREST('/machine/update/status?refresh=false')
-			print("[init_Webservices] version_data=%s" % (json.dumps(version_data, indent=2)[:500] if version_data else 'None'))
 			self.SHORT_BUILD_VERSION = version_data['result']['version_info']['klipper']['version']
-			print("[init_Webservices] SHORT_BUILD_VERSION=%s" % self.SHORT_BUILD_VERSION)
 		except Exception as e:
-			print("[init_Webservices] ERROR fetching version: %s (using default)" % e)
+			print("init_Webservices: ERROR fetching version: %s (using default)" % e)
 			self.SHORT_BUILD_VERSION = "unknown"
 
-		print("[init_Webservices] Fetching toolhead/axis info...")
 		data = self.getREST('/printer/objects/query?toolhead')['result']['status']
-		print("[init_Webservices] toolhead data=%s" % json.dumps(data, indent=2)[:500])
-		#print(json.dumps(data, indent=2))
 		toolhead = data['toolhead']
 		volume = toolhead['axis_maximum'] #[x,y,z,w]
 		self.MACHINE_SIZE = "{}x{}x{}".format(
@@ -515,17 +496,13 @@ class PrinterData:
 		return names
 
 	def update_variable(self):
-		print("[update_variable] called, ks.connected=%s" % self.ks.connected)
 		if self.ks.connected == False:
-			print("[update_variable] KlippySocket not connected, restarting...")
 			self.ks.klippyExit()
 			self.klippy_start()
 			return None
 		query = '/printer/objects/query?extruder&heater_bed&gcode_move&fan&print_stats&motion_report&toolhead'
 		try:
-			print("[update_variable] Calling getREST for printer objects...")
 			data = self.getREST(query)['result']['status']
-			print("[update_variable] Got printer objects OK")
 		except Exception as e:
 			print("Exception 431: %s" % e)
 			import traceback; traceback.print_exc()
@@ -582,9 +559,7 @@ class PrinterData:
 		except:
 			pass #missing key, shouldn't happen, fixes misses on conditionals ¯\_(ツ)_/¯
 		try:
-			print("[update_variable] Calling getREST for job info...")
 			self.job_Info = self.getREST('/printer/objects/query?virtual_sdcard&print_stats')['result']['status']
-			print("[update_variable] Got job info OK, state=%s" % (self.job_Info.get('print_stats', {}).get('state', '?') if self.job_Info else 'None'))
 		except Exception as e:
 			print("Exception 470: %s" % e)
 			import traceback; traceback.print_exc()
@@ -594,7 +569,6 @@ class PrinterData:
 			self.file_name = self.job_Info['print_stats']['filename']
 			self.status = self.job_Info['print_stats']['state']
 			self.HMI_flag.print_finish = self.getPercent() == 100.0
-		print("[update_variable] returning Update=%s" % Update)
 		return Update
 
 	def getState(self):
@@ -701,7 +675,6 @@ class PrinterData:
 			self.preHeat(self.material_preset[1].bed_temp, self.material_preset[1].hotend_temp)
 
 	def save_settings(self):
-		print('saving settings')
 		return True
 
 	def setExtTemp(self, target, toolnum=0):
