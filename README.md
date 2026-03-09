@@ -64,8 +64,8 @@ A more detailed guide on LCD screen firmware update can be found on the [Elegoo 
 
 
 ## Enable the UART
-> **_Note_**: You can safely skip this section if you wired the display through a USB to UART converter
-### [Disable Linux serial console](https://www.raspberrypi.org/documentation/configuration/uart.md)
+> **_Note_**: You can safely skip this section if you wired the display through a USB to UART converter, or if you are using a BTT Pi v1.2 (Allwinner H616 — `raspi-config` does not apply).
+### [Disable Linux serial console (Raspberry Pi only)](https://www.raspberrypi.org/documentation/configuration/uart.md)
   By default, the primary UART is assigned to the Linux console. If you wish to use the primary UART for other purposes, you must reconfigure Raspberry Pi OS. This can be done by using raspi-config:
 
   * Start raspi-config: `sudo raspi-config.`
@@ -91,15 +91,19 @@ A more detailed guide on LCD screen firmware update can be found on the [Elegoo 
 
         cat ~/printer_data/systemd/klipper.env
 
-    Response:
+    Response (Raspberry Pi / user `pi`):
 
         KLIPPER_ARGS="/home/pi/klipper/klippy/klippy.py /home/pi/printer_data/config/printer.cfg -I /home/pi/printer_data/comms/klippy.serial -l /home/pi/printer_data/logs/klippy.log -a /home/pi/printer_data/comms/klippy.sock"
-    
-    The KLIPPER_ARGS should include `-a /home/pi/printer_data/comms/klippy.sock`. If not add it to the klipper.env file!
+
+    Response (BTT Pi v1.2 / user `biqu`):
+
+        KLIPPER_ARGS="/home/biqu/klipper/klippy/klippy.py /home/biqu/printer_data/config/printer.cfg -I /home/biqu/printer_data/comms/klippy.serial -l /home/biqu/printer_data/logs/klippy.log -a /home/biqu/printer_data/comms/klippy.sock"
+
+    The KLIPPER_ARGS must include `-a <path>/klippy.sock`. If not, add it to the klipper.env file!
 
 ### Get the code
-    git clone https://github.com/joakimtoe/KlipperLCD
-    cd KlipperLCD
+    git clone https://github.com/jcfield-boop/klipperlcd
+    cd klipperlcd
 
 ### Installation (Automated - Recommended)
 The easiest way to install and configure KlipperLCD is using the automated installation script:
@@ -120,12 +124,22 @@ After installation, you can customize your settings by editing `~/printer_data/c
 All KlipperLCD settings are now managed through the `KlipperLCD.cfg` configuration file located at `~/printer_data/config/KlipperLCD.cfg`.
 
 **Important settings to review:**
-* `serial_port` - Set this to your LCD's serial port (e.g., `/dev/ttyUSB0`, `/dev/ttyAMA0`)
+* `serial_port` - Set this to your LCD's serial port (see table below)
 * `moonraker_api_key` - Set if your Moonraker requires authentication
-* `klippy_socket` - Path to Klipper's socket (default is usually correct)
+* `klippy_socket` - Path to Klipper's socket — set to match your user's home directory
 * Material temperature presets (PLA, ABS, PETG, TPU)
 
-> **_Note_**: If using a USB to UART converter, the port is typically `/dev/ttyUSB0`. For direct Raspberry Pi UART connection, use `/dev/ttyAMA0`.
+**Serial port by connection type:**
+
+| Connection | Port |
+|------------|------|
+| USB to UART adapter (CP2102, CH340, etc.) | `/dev/ttyUSB0` or use stable path: `/dev/serial/by-id/usb-<your-adapter>-port0` |
+| Raspberry Pi GPIO UART (direct) | `/dev/ttyAMA0` |
+| BTT Pi v1.2 / Allwinner H616 native UART | `/dev/ttyS3` or `/dev/ttyS5` — check your board docs |
+
+> **BTT Pi v1.2 users**: `/dev/ttyAMA0` does **not** exist on the Allwinner H616 SoC. Use a USB-to-UART adapter or a native SoC UART. For the most reliable setup, use the stable device path: `ls /dev/serial/by-id/` to find your adapter's persistent name.
+>
+> **BTT Pi v1.2 users**: Set `klippy_socket = /home/biqu/printer_data/comms/klippy.sock` (the default assumes `/home/pi/`).
 
 You can generate a sample configuration file manually:
 
