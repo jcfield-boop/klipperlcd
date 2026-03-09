@@ -118,7 +118,7 @@ class KlipperLCD ():
             else:
                 print("ERROR: gcode file not known")
             
-            file = self.printer.file_path + "/" + file_name
+            file = os.path.expanduser(self.printer.file_path) + "/" + file_name
 
             # Reading file
             print(file)
