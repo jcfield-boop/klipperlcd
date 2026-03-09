@@ -217,45 +217,24 @@ class LCD:
         self.ser.close()
         self.running = False
     
-    def _boot_write(self, data):
-        """Write during boot sequence with explicit logging of bytes sent and any error."""
-        label = data if isinstance(data, str) else data.decode('ascii', errors='replace')
-        print("Boot: >>> %s" % label)
-        try:
-            dat = bytearray()
-            if isinstance(data, str):
-                dat.extend(map(ord, data))
-            else:
-                dat.extend(data)
-            n = self.ser.write(dat)
-            self.ser.write(bytearray([0xFF, 0xFF, 0xFF]))
-            print("Boot: <<< wrote %d bytes, port open=%s" % (n, self.ser.is_open))
-        except Exception as e:
-            print("Boot: !!! WRITE FAILED for '%s': %s" % (label, e))
-
     def start(self, *args, **kwargs):
         self.running = True
         while True:
             try:
                 self.ser.open()
-                print("Serial port %s opened successfully (baud=%d, bytesize=%s, parity=%s, stopbits=%s)" % (
-                    self.ser.port, self.ser.baudrate, self.ser.bytesize,
-                    self.ser.parity, self.ser.stopbits))
+                print("Serial port %s opened" % self.ser.port)
                 break
             except Exception as e:
                 print("Waiting for serial port %s: %s (retrying in 5s...)" % (self.ser.port, e))
                 sleep(5)
 
         Thread(target=self.run).start()
-        sleep(1)  # allow CP2102 UART to settle after open
 
-        print("Boot: serial is_open=%s" % self.ser.is_open)
-        self._boot_write("page boot")
-        self._boot_write(b'com_star')
-        self._boot_write("main.va0.val=1")   # TJC handshake — display ignores commands until this is set
-        self._boot_write("boot.j0.val=1")
-        self._boot_write("boot.t0.txt=\"KlipperLCD.service starting...\"")
-        print("Boot: sequence complete")
+        self.write("page boot")
+        self.write(b'com_star')
+        self.write(b'main.va0.val=1')
+        self.write("boot.j0.val=1")
+        self.write("boot.t0.txt=\"KlipperLCD.service starting...\"")
 
     def boot_progress(self, progress):
         self.write("boot.t0.txt=\"Waiting for Klipper...\"")
