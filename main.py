@@ -15,10 +15,14 @@ from visualization import (format_bed_mesh_grid, format_klipper_state,
                            format_pressure_advance_info, format_input_shaper_info,
                            format_file_metadata, format_system_stats)
 
+logger = logging.getLogger('KlipperLCD.main')
+
 class KlipperLCD ():
     def __init__(self, config=None):
         self.config = config if config else KlipperLCDConfig()
 
+        logger.info("Initialising LCD on %s at %d baud" % (
+            self.config.connection.serial_port, self.config.connection.baud_rate))
         self.lcd = LCD(
             self.config.connection.serial_port,
             baud=self.config.connection.baud_rate,
@@ -27,6 +31,8 @@ class KlipperLCD ():
         )
         self.lcd.start()
 
+        logger.info("Connecting to Moonraker at %s:%d" % (
+            self.config.klipper.moonraker_host, self.config.klipper.moonraker_port))
         self.printer = PrinterData(
             self.config.klipper.moonraker_api_key,
             host=self.config.klipper.moonraker_host,
@@ -39,27 +45,34 @@ class KlipperLCD ():
         self.wait_probe = False
         self.thumbnail_inprogress = False
 
+        logger.info("Waiting for Klipper/Moonraker to become ready...")
         progress_bar = 1
         while self.printer.update_variable() is None:
             progress_bar += 5
             self.lcd.boot_progress(progress_bar)
             time.sleep(1)
+        logger.info("Klipper ready")
 
+        logger.info("Initialising Moonraker web services")
         self.printer.init_Webservices()
 
+        logger.info("Loading gcode store")
         gcode_store = self.printer.get_gcode_store()
         self.lcd.write_gcode_store(gcode_store)
 
+        logger.info("Loading macros")
         macros = self.printer.get_macros()
         self.lcd.write_macros(macros)
 
+        logger.info("Switching LCD to main page")
         self.lcd.write("information.size.txt=\"%s\"" % self.printer.MACHINE_SIZE)
         self.lcd.write("information.sversion.txt=\"%s\"" % self.printer.SHORT_BUILD_VERSION)
         self.lcd.write("main.va0.val=1")
         self.lcd.write("page main")
+        logger.info("Startup complete")
 
     def start(self):
-        print("KlipperLCD start")
+        logger.info("KlipperLCD start")
         self.running = True
         #self.lcd.start()
         Thread(target=self.periodic_update).start()
