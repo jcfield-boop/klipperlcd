@@ -228,6 +228,8 @@ class LCD:
                 print("Waiting for serial port %s: %s (retrying in 5s...)" % (self.ser.port, e))
                 sleep(5)
 
+        sleep(1)   # allow CP2102 adapter to initialize before sending commands
+
         Thread(target=self.run).start()
 
         self.write("page boot")

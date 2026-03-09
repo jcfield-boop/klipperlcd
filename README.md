@@ -196,10 +196,19 @@ The configuration file is located in `~/printer_data/config/`, making it accessi
 ## Troubleshooting
 
 ### LCD stuck on "Waiting for KlipperLCD.service..."
-If the display never leaves the waiting screen even though the service starts without errors, this is a TJC firmware handshake issue. The TJC TFT firmware (used on the Neptune 3 Pro) requires the host to set `main.va0.val=1` after the `com_star` command before it will accept any page-switch or variable commands. This is included in the boot sequence as of the current version. If you are on an older version, update to the latest and restart the service:
+If the display never leaves the waiting screen even though the service starts without errors, the CP2102 USB-to-UART adapter is not ready to transmit by the time the first serial commands (`com_star`, `page boot`) are sent. Without `com_star` being received, the TFT firmware stays in its waiting state and silently discards all subsequent commands.
+
+The fix is a 1-second delay after the serial port opens, which is included in the current version. Update to the latest and restart:
 
     git pull
     sudo systemctl restart KlipperLCD.service
+
+If the LCD **still** shows no change after updating, the issue is hardware (TX/RX wiring). Verify with:
+
+    sudo systemctl stop KlipperLCD.service
+    printf 'page boot\xff\xff\xff' > /dev/serial/by-id/usb-Silicon_Labs_CP2102_USB_to_UART_Bridge_Controller_0001-if00-port0
+
+If the LCD does not respond to that command, the TX line is not reaching the LCD RX pin — check your wiring.
 
 ## Console
 The console is enabled by default and can be accessed by clicking center top of the main screen or by clicking the thumbnail area while printing.
