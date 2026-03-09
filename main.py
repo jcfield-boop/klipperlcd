@@ -236,10 +236,20 @@ class KlipperLCD ():
         self.lcd.write("information.size.txt=\"%s\"" % self.printer.MACHINE_SIZE)
         self.lcd.write("information.sversion.txt=\"%s\"" % self.printer.SHORT_BUILD_VERSION)
         time.sleep(2)
-        self.lcd.write("main.va0.val=1")
-        self.lcd.write("page main")
+        print("Init: serial is_open=%s before page main" % self.lcd.ser.is_open)
+        try:
+            self.lcd.write("main.va0.val=1")
+            print("Init: sent main.va0.val=1 OK")
+            self.lcd.write("page main")
+            print("Init: sent page main OK")
+        except Exception as e:
+            print("Init: !!! FAILED sending page main: %s" % e)
         time.sleep(0.5)
-        self.lcd.write("page main")
+        try:
+            self.lcd.write("page main")
+            print("Init: sent page main (2nd) OK")
+        except Exception as e:
+            print("Init: !!! FAILED sending page main (2nd): %s" % e)
 
     def start(self):
         print("KlipperLCD start")
