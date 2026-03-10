@@ -223,6 +223,25 @@ If the LCD **still** shows no change after updating, the issue is hardware (TX/R
 
 If the LCD does not respond to that command, the TX line is not reaching the LCD RX pin — check your wiring.
 
+### LED not responding / "not valid for LED" error
+If toggling the LED from the LCD panel produces an error like `!! The value 'top_LEDs' is not valid for LED` in `~/printer_data/logs/KlipperLCD.log`, the default LED name in KlipperLCD does not match the name defined in your `printer.cfg`.
+
+The default has been updated to `LED_Light` to match the standard Neptune 3 Pro configuration. If your printer uses a different name, set it explicitly in `KlipperLCD.cfg`:
+
+```ini
+[features]
+led_name = YOUR_LED_NAME
+```
+
+Replace `YOUR_LED_NAME` with the name from your `printer.cfg` (the part after `[led `).
+
+Update to the latest and restart:
+
+    git pull
+    sudo systemctl restart KlipperLCD.service
+
+---
+
 ## Console
 The console is enabled by default and can be accessed by clicking center top of the main screen or by clicking the thumbnail area while printing.
 

@@ -186,11 +186,11 @@ class FeaturesConfig:
         if config_parser and config_parser.has_section('features'):
             self.default_pa = config_parser.getfloat('features', 'default_pa', fallback=0.0)
             self.enable_console_shortcuts = config_parser.getboolean('features', 'enable_console_shortcuts', fallback=True)
-            self.led_name = config_parser.get('features', 'led_name', fallback='top_LEDs')
+            self.led_name = config_parser.get('features', 'led_name', fallback='LED_Light')
         else:
             self.default_pa = 0.0
             self.enable_console_shortcuts = True
-            self.led_name = 'top_LEDs'
+            self.led_name = 'LED_Light'
 
         self._validate()
 

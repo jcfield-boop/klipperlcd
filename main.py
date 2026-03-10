@@ -239,11 +239,8 @@ class KlipperLCD ():
             #print("SET_VELOCITY_LIMIT ACCEL=%d" % data)
             self.printer.sendGCode("SET_VELOCITY_LIMIT ACCEL=%d" % data)
         elif evt == self.lcd.evt.ACCEL_TO_DECEL:
-            if getattr(self.printer, 'minimum_cruise_ratio', None) is not None:
-                ratio = max(0.0, min(1.0, data / max(self.printer.max_accel, 1)))
-                self.printer.sendGCode("SET_VELOCITY_LIMIT MINIMUM_CRUISE_RATIO=%.4f" % ratio)
-            else:
-                self.printer.sendGCode("SET_VELOCITY_LIMIT ACCEL_TO_DECEL=%d" % data)
+            ratio = max(0.0, min(1.0, data / max(self.printer.max_accel, 1)))
+            self.printer.sendGCode("SET_VELOCITY_LIMIT MINIMUM_CRUISE_RATIO=%.4f" % ratio)
         elif evt == self.lcd.evt.VELOCITY:
             #print("SET_VELOCITY_LIMIT VELOCITY=%d" % data)
             self.printer.sendGCode("SET_VELOCITY_LIMIT VELOCITY=%d" % data)
