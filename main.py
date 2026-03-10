@@ -64,11 +64,13 @@ class KlipperLCD ():
         macros = self.printer.get_macros()
         self.lcd.write_macros(macros)
 
-        logger.info("Switching LCD to main page")
-        self.lcd.write("information.size.txt=\"%s\"" % self.printer.MACHINE_SIZE)
-        self.lcd.write("information.sversion.txt=\"%s\"" % self.printer.SHORT_BUILD_VERSION)
+        logger.info("Switching LCD to main page (size=%s, fw=%s)" % (
+            self.printer.MACHINE_SIZE, self.printer.SHORT_BUILD_VERSION))
         self.lcd.write("main.va0.val=1")
         self.lcd.write("page main")
+        time.sleep(0.2)  # let display process page switch before cross-page writes
+        self.lcd.write("information.size.txt=\"%s\"" % self.printer.MACHINE_SIZE)
+        self.lcd.write("information.sversion.txt=\"%s\"" % self.printer.SHORT_BUILD_VERSION)
         logger.info("Startup complete")
 
     def start(self):

@@ -195,6 +195,19 @@ The configuration file is located in `~/printer_data/config/`, making it accessi
 
 ## Troubleshooting
 
+### LCD stuck on boot page after Klipper connects
+If the display stays on the "Waiting for Klipper..." boot page even though the log shows "Startup complete", the startup commands were being sent in the wrong order. Component writes to `information.size.txt` and `information.sversion.txt` were going out before `page main`, which can confuse the TJC display's serial parser and cause it to silently drop the page switch.
+
+The fix reorders startup to send `page main` first, waits 200ms for the display to process the switch, then writes the info fields. Update to the latest and restart:
+
+    git pull
+    sudo systemctl restart KlipperLCD.service
+
+Expected log output confirming the fix:
+
+    ... INFO - Switching LCD to main page (size=220x220x250, fw=0.12.0-xxx)
+    ... INFO - Startup complete
+
 ### LCD stuck on "Waiting for KlipperLCD.service..."
 If the display never leaves the waiting screen even though the service starts without errors, the CP2102 USB-to-UART adapter is not ready to transmit by the time the first serial commands (`com_star`, `page boot`) are sent. Without `com_star` being received, the TFT firmware stays in its waiting state and silently discards all subsequent commands.
 
