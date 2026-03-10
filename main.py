@@ -66,6 +66,7 @@ class KlipperLCD ():
 
         logger.info("Switching LCD to main page (size=%s, fw=%s)" % (
             self.printer.MACHINE_SIZE, self.printer.SHORT_BUILD_VERSION))
+        self.lcd.write(b'com_star')
         self.lcd.write("main.va0.val=1")
         self.lcd.write("page main")
         time.sleep(0.2)  # let display process page switch before cross-page writes
